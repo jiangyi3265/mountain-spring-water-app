@@ -1,0 +1,54 @@
+{
+  "name": "mountain-spring-water-miniapp",
+  "version": "1.0.0",
+  "description": "山泉到家用户端与送水员端 uni-app 应用",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jiangyi3265/mountain-spring-water-app.git"
+  },
+  "scripts": {
+    "dev:h5": "cross-env UNI_INPUT_DIR=. uni --host 127.0.0.1",
+    "lint": "eslint App.vue main.js uni.promisify.adaptor.js services components pages vite.config.js",
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit",
+    "build:h5": "cross-env UNI_INPUT_DIR=. uni build",
+    "dev:mp-weixin": "cross-env UNI_INPUT_DIR=. uni -p mp-weixin",
+    "build:mp-weixin": "cross-env UNI_INPUT_DIR=. uni build -p mp-weixin"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-4080720251210001",
+    "@dcloudio/uni-components": "3.0.0-4080720251210001",
+    "@dcloudio/uni-h5": "3.0.0-4080720251210001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-4080720251210001",
+    "@dcloudio/types": "3.4.19",
+    "vue": "3.4.21"
+  },
+  "devDependencies": {
+    "@dcloudio/vite-plugin-uni": "3.0.0-4080720251210001",
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "@vue/compiler-sfc": "3.4.21",
+    "cross-env": "7.0.3",
+    "eslint": "^9.39.1",
+    "eslint-plugin-vue": "^10.6.0",
+    "globals": "^16.5.0",
+    "sass": "1.77.8",
+    "typescript": "^5.9.3",
+    "vite": "5.2.8",
+    "vue-tsc": "^3.1.5"
+  },
+  "overrides": {
+    "@babel/core": "^7.29.1",
+    "@intlify/core-base": "^9.14.5",
+    "@intlify/message-compiler": "^9.14.5",
+    "@intlify/message-resolver": "^9.14.5",
+    "@intlify/runtime": "^9.14.5",
+    "@intlify/vue-devtools": "^9.14.5",
+    "adm-zip": "^0.6.0",
+    "esbuild": "^0.25.0",
+    "jpeg-js": "^0.4.4",
+    "phin": "^3.7.1",
+    "ws": "^8.21.0"
+  }
+}

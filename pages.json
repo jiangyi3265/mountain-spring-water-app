@@ -1,0 +1,40 @@
+{
+	"pages": [
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "山泉到家"
+			}
+		},
+		{
+			"path": "pages/order/index",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "订单"
+			}
+		},
+		{
+			"path": "pages/member/index",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "水票会员"
+			}
+		},
+		{
+			"path": "pages/delivery/index",
+			"style": {
+				"navigationStyle": "custom",
+				"navigationBarTitleText": "山泉配送"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "山泉到家",
+		"navigationBarBackgroundColor": "#F6F7F3",
+		"backgroundColor": "#F6F7F3",
+		"backgroundTextStyle": "dark"
+	},
+	"uniIdRouter": {}
+}
