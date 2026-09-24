@@ -1,0 +1,53 @@
+/* 02-下单支付与售后: quiet mountain crest, grouped content, clear amounts. */
+.order-page { background: #f5f7f5; }
+.page-scroll { padding: 24rpx 22rpx 150rpx; background: linear-gradient(rgba(247,249,246,.65),rgba(247,249,246,.65)),url('/static/design/mountain-contours.svg') center -175rpx/100% auto no-repeat; }
+.card { border: 1rpx solid #e7ece8; border-radius: 18rpx; box-shadow: none; margin-bottom: 16rpx; }
+.order-page button::after { border: 0; }
+.section-title { font-size: 25rpx; }
+.address-card { padding: 24rpx 22rpx; }
+.address-main .address { line-height: 1.5; font-size: 26rpx; }
+.address-main .hint { color: #869089; }
+.line-row { min-height: 82rpx; }
+.goods-line { gap: 16rpx; padding: 22rpx 0; }
+.goods-line :deep(.jug-wrap) { width: 104rpx; height: 132rpx; }
+.goods-copy { min-width: 0; }
+.goods-name { font-size: 26rpx; font-weight: 500; line-height: 1.5; }
+.muted { font-size: max(12px,22rpx); line-height: 1.5; }
+.amount-card { padding: 45rpx 24rpx; }
+.big-amount { color: #e24428; font-weight: 600; font-size: 76rpx; margin: 18rpx 0 16rpx; }
+.pay-countdown { font-size: max(12px, 23rpx); }
+.safe-note { display: flex; align-items: center; justify-content: center; gap: 8rpx; color: #75857c; }
+.success-panel { padding-top: 22rpx; }
+.success-icon { background: linear-gradient(145deg,#4ca89a,#00685a); box-shadow: none; }
+.delivery-window { background: #fff; border: 1rpx solid #e6ece8; border-radius: 18rpx 18rpx 0 0; }
+.success-detail { border: 1rpx solid #e6ece8; border-top: 0; border-radius: 0 0 18rpx 18rpx; }
+.notify-card { border-radius: 16rpx; background: #eaf2ee; }
+.notify-card .ui-small { line-height: 1.5; }
+.search-box { border: 1rpx solid #e2e9e5; background: #fff; border-radius: 12rpx; }
+.status-tabs { margin: 12rpx -22rpx 18rpx; padding: 0 22rpx; align-items: center; height: 84rpx; }
+.status-tabs text { height: 84rpx; display: flex; align-items: center; font-size: 24rpx; }
+.status-tabs .active:after { height: 3rpx; left: 8%; right: 8%; bottom: 8rpx; }
+.order-card { padding: 20rpx 22rpx 16rpx; }
+.order-head { font-size: max(12px, 22rpx); color: #78867f; }
+.order-head > text:last-child { color: #086a59; font-weight: 600; }
+.order-foot button { border-radius: 30rpx; min-width: 145rpx; height: 58rpx; display: flex; align-items: center; justify-content: center; font-size: max(12px, 23rpx); }
+.detail-hero { height: 186rpx; margin: -24rpx -22rpx 16rpx; padding: 34rpx 28rpx; background: #0b7566 url('/static/design/mountain-contours-gold.svg') center/cover no-repeat; }
+.detail-hero > view:first-child { max-width: 80%; }
+.detail-state { font-size: 34rpx; font-weight: 600; }
+.detail-hero > view > text:last-child { font-size: max(12px, 23rpx); line-height: 1.6; }
+.courier { margin-top: -28rpx; position: relative; z-index: 2; }
+.reason-tags text { border-radius: 14rpx; padding: 13rpx 18rpx; }
+.radio-line { border-radius: 12rpx; background: #f5f7f5; padding: 18rpx; margin-bottom: 12rpx; }
+.refund-amount .ui-strong,.minus { color: #e14b34; }
+.bottom-action button,.single-action button,.double-action button { border-radius: 14rpx; background: #086d5e; font-weight: 500; }
+.double-action .ghost { background: #fff; }
+.aftersale-entry { color: #58766a; font-size: max(12px, 22rpx); }
+.orders-toolbar { display: grid; grid-template-columns: minmax(0,1fr) 128rpx; align-items: center; gap: 16rpx; }
+.orders-toolbar .search-box { margin: 0; height: 68rpx; }
+.orders-toolbar .aftersale-entry { margin: 0; padding: 0; height: 68rpx; display: flex; align-items: center; justify-content: center; border: 0; background: transparent; font-size: max(12px, 22rpx); }
+.screen-orders .page-scroll { padding-bottom: 30rpx; }
+.order-info > view { gap: 16rpx; }
+.order-info > view > text:last-child { overflow-wrap: anywhere; text-align: right; }
+
+/* 触控目标：主要操作按钮不小于 44px（WCAG 2.5.5 / 项目设计规范） */
+.bottom-action button,.single-action button,.double-action button{min-height:44px}.order-foot button{min-height:40px;height:auto}.aftersale-entry,.sync-warning button{min-height:44px}

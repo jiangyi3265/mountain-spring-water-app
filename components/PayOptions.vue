@@ -11,21 +11,43 @@
 <script>
 import AppIcon from './AppIcon.vue'
 export default {
-	name: 'PayOptions', components: { AppIcon },
-	props: { modelValue: { type: String, default: 'wechat' }, compact: { type: Boolean, default: false } },
+	name: 'PayOptions',
+	components: { AppIcon },
+	props: {
+		modelValue: { type: String, default: 'wechat' },
+		compact: { type: Boolean, default: false },
+		/** 应付金额为 0（水票全额抵扣）时只显示水票支付 */
+		ticketOnly: { type: Boolean, default: false },
+		/** 服务端配置：是否已接入微信支付 / 是否开发模式模拟支付 */
+		wechatPay: { type: Boolean, default: false },
+		simulatedPayments: { type: Boolean, default: false },
+		balance: { type: Number, default: 0 },
+		payable: { type: Number, default: 0 }
+	},
 	emits: ['update:modelValue'],
-	data() {
-		return { items: [
-			{ id: 'wechat', icon: 'message', name: '微信支付', note: '需配置正式微信商户号' },
-			{ id: 'balance', icon: 'wallet', name: '余额支付', note: '提交时按真实账户余额校验' },
-			{ id: 'ticket', icon: 'ticket', name: '纸质水票支付', note: '核销抵扣规则待配置', disabled: true },
-			{ id: 'cod', icon: 'order', name: '货到付款', note: '账务状态流程待配置', disabled: true }
-		] }
+	computed: {
+		items() {
+			if (this.ticketOnly) return [{ id: 'ticket', icon: 'ticket', name: '水票支付', note: '已用水票全额抵扣，无需付款', disabled: false }]
+			const wechatDisabled = !this.wechatPay && !this.simulatedPayments
+			const balanceDisabled = this.balance < this.payable
+			return [
+				{ id: 'wechat', icon: 'wallet', name: '微信支付', note: this.wechatPay ? '微信安全支付' : this.simulatedPayments ? '本地联调模拟支付' : '需商户号配置后开放', disabled: wechatDisabled },
+				{ id: 'balance', icon: 'wallet', name: '余额支付', note: balanceDisabled ? `余额 ¥${this.balance.toFixed(2)} 不足` : `余额 ¥${this.balance.toFixed(2)}`, disabled: balanceDisabled },
+				{ id: 'cod', icon: 'order', name: '货到付款', note: '送水员送达时现金或当面扫码收款', disabled: false }
+			]
+		}
 	},
 	methods:{select(item){if(!item.disabled)this.$emit('update:modelValue',item.id)}}
 }
 </script>
 
 <style scoped>
-.pay-option{min-height:94rpx;display:flex;align-items:center;border-bottom:1rpx solid #e8efec}.pay-option:last-child{border-bottom:0}.pay-icon{width:52rpx;height:52rpx;margin-right:18rpx;display:grid;place-items:center;border-radius:15rpx;background:#e5f0ec}.pay-icon.balance{background:#f3eadb}.pay-icon.ticket{background:#e3eeee}.pay-icon.cod{background:#f4eee5}.pay-option>view:nth-child(2){flex:1;display:flex;flex-direction:column;gap:5rpx}.pay-option .ui-strong{font-size:24rpx;font-weight:650}.pay-option .ui-small{color:#7b8984;font-size:19rpx}.pay-radio{width:34rpx;height:34rpx;display:grid;place-items:center;border:2rpx solid #c5d1cd;border-radius:50%;color:transparent;font-size:19rpx}.pay-radio.on{color:#fff;border-color:#0f725d;background:#0f725d}.pay-option.unavailable{opacity:.48}.pay-option.unavailable .pay-radio{display:none}
+.pay-options { display: flex; flex-direction: column; gap: 10rpx; }
+.pay-option { display: flex; align-items: center; gap: 16rpx; padding: 18rpx 6rpx; border-bottom: 1rpx solid #edf1ef; }
+.pay-option:last-child { border-bottom: 0; }
+.pay-option > view:nth-child(2) { flex: 1; display: flex; flex-direction: column; gap: 4rpx; }
+.pay-icon { width: 56rpx; height: 56rpx; display: grid; place-items: center; border-radius: 14rpx; background: #e8f3ee; }
+.pay-radio { width: 36rpx; height: 36rpx; display: grid; place-items: center; border: 2rpx solid #c9d6d1; border-radius: 50%; color: transparent; font-size:max(12px, 22rpx); }
+.pay-radio.on { color: #fff; border-color: #0b5949; background: #0b5949; }
+.unavailable { opacity: .5; }
 </style>

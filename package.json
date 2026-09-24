@@ -11,9 +11,14 @@
     "dev:h5": "cross-env UNI_INPUT_DIR=. uni --host 127.0.0.1",
     "lint": "eslint App.vue main.js uni.promisify.adaptor.js services components pages vite.config.js",
     "typecheck": "vue-tsc -p tsconfig.json --noEmit",
+    "test": "node --test qa/frontend-contract.test.mjs qa/logout-contract.test.mjs qa/auth-form.test.mjs qa/navigation.test.mjs qa/checkout-regression.test.mjs",
+    "qa:failure-smoke": "node qa/failure-mode-smoke.mjs",
+    "qa:acceptance": "npm run lint && npm run typecheck && npm test && npm run build:h5 && npm run build:mp-weixin",
     "build:h5": "cross-env UNI_INPUT_DIR=. uni build",
+    "postbuild:h5": "node qa/check-build.mjs h5",
     "dev:mp-weixin": "cross-env UNI_INPUT_DIR=. uni -p mp-weixin",
-    "build:mp-weixin": "cross-env UNI_INPUT_DIR=. uni build -p mp-weixin"
+    "build:mp-weixin": "cross-env UNI_INPUT_DIR=. uni build -p mp-weixin",
+    "postbuild:mp-weixin": "node qa/check-build.mjs mp-weixin"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-4080720251210001",
@@ -25,6 +30,7 @@
   },
   "devDependencies": {
     "@dcloudio/vite-plugin-uni": "3.0.0-4080720251210001",
+    "qrcode-generator": "2.0.4",
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.0",
     "@typescript-eslint/parser": "^8.48.0",
@@ -35,7 +41,7 @@
     "globals": "^16.5.0",
     "sass": "1.77.8",
     "typescript": "^5.9.3",
-    "vite": "5.2.8",
+    "vite": "6.4.3",
     "vue-tsc": "^3.1.5"
   },
   "overrides": {
@@ -45,10 +51,13 @@
     "@intlify/message-resolver": "^9.14.5",
     "@intlify/runtime": "^9.14.5",
     "@intlify/vue-devtools": "^9.14.5",
-    "adm-zip": "^0.6.0",
+    "adm-zip": "0.6.1",
     "esbuild": "^0.25.0",
+    "express": "^4.22.3",
     "jpeg-js": "^0.4.4",
     "phin": "^3.7.1",
+    "postcss": "^8.5.23",
+    "vite": "$vite",
     "ws": "^8.21.0"
   }
 }

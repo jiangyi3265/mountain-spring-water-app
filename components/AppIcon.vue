@@ -34,8 +34,11 @@ import truck from '../static/icons/truck.svg?raw'
 import umbrella from '../static/icons/umbrella.svg?raw'
 import user from '../static/icons/user.svg?raw'
 import wallet from '../static/icons/wallet.svg?raw'
+import eye from '../static/icons/eye.svg?raw'
+import eyeOff from '../static/icons/eye-off.svg?raw'
+import wechat from '../static/icons/wechat.svg?raw'
 
-const iconSources = { bell, bottle, camera, cart, check, clock, coupon, cup, gift, grid, heart, help, home, lamp, lock, map, message, order, phone, pin, points, qr, search, settings, shield, ticket, towel, truck, umbrella, user, wallet }
+const iconSources = { bell, bottle, camera, cart, check, clock, coupon, cup, gift, grid, heart, help, home, lamp, lock, map, message, order, phone, pin, points, qr, search, settings, shield, ticket, towel, truck, umbrella, user, wallet, eye, 'eye-off': eyeOff, wechat }
 
 export default {
 	name: 'AppIcon',

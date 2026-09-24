@@ -13,7 +13,7 @@ export default [
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      globals: { ...globals.browser, ...globals.node, uni: 'readonly' },
+      globals: { ...globals.browser, ...globals.node, uni: 'readonly', getCurrentPages: 'readonly' },
     },
     rules: {
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],

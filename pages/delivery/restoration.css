@@ -1,0 +1,80 @@
+/* 04-送水员端: mountain identity and practical, legible delivery cards. */
+.delivery-page { background: #f5f7f4; }
+.delivery-page button::after { border: 0; }
+.login-screen { display: flex; flex-direction: column; overflow-y: auto; background: #d3e5dc; }
+.login-screen::after { pointer-events: none; left: 0; right: 0; top: 80rpx; bottom: auto; height: 500rpx; border-radius: 0; background: url('/static/design/mountain-contours.svg') center/cover; opacity: .7; }
+.login-brand { margin-top: 64rpx; }
+.courier-mark { width: 118rpx; height: 142rpx; }
+.login-brand .ui-strong { margin-top: 12rpx; font-size: 44rpx; letter-spacing: 5rpx; }
+.login-brand > text:last-child { margin-top: 14rpx; color: #42695e; font-size: 24rpx; letter-spacing: 2rpx; }
+.login-form { margin: 58rpx 36rpx 0; }
+.login-form .integration-note { padding: 0 4rpx; border: 0; background: transparent; color: #557369; font-size: max(12px, 22rpx); text-align: center; }
+.login-form > view { margin: 0; height: 100rpx; box-shadow: none; border-radius: 0; border: 0; border-bottom: 1rpx solid #e2e9e2; background: rgba(255,255,255,.95); }
+.login-form > view:first-of-type { border-radius: 18rpx 18rpx 0 0; }
+.login-form > view:last-of-type { border-radius: 0 0 18rpx 18rpx; border: 0; }
+.login-form input { font-size: 25rpx; }
+.login-form button { margin-top: 28rpx; height: 90rpx; border-radius: 15rpx; background: #05665a; display: flex; align-items: center; justify-content: center; font-size: 28rpx; }
+.current-station { position: relative; left: auto; right: auto; bottom: auto; margin: auto 36rpx 40rpx; padding: 25rpx; min-height: 114rpx; border: 1rpx solid rgba(255,255,255,.8); border-radius: 16rpx; background: rgba(255,255,255,.87); flex-shrink: 0; }
+.login-form { padding-bottom: 60rpx; }
+.work-hero { height: calc(var(--mobile-header-height,44px) + 215rpx); background: #176b5d url('/static/design/mountain-contours-gold.svg') center/cover no-repeat; }
+.work-profile { padding: 30rpx 30rpx; }
+.work-scroll { height: calc(100vh - var(--mobile-header-height,44px) - 142rpx); height: calc(100dvh - var(--mobile-header-height,44px) - 142rpx); margin-top: -73rpx; padding: 0 24rpx 140rpx; position: relative; z-index: 2; }
+.stats-card { padding: 25rpx; border-radius: 18rpx; border: 1rpx solid #e7ece7; box-shadow: 0 5rpx 16rpx rgba(30,63,49,.04); }
+.today .ui-strong { color: #253b30; font-size: 62rpx; }
+.stat-grid { gap: 16rpx; background: transparent; border-radius: 0; }
+.stat-grid view { background: #f2f5f1; border-radius: 14rpx; gap: 8rpx; }
+.stat-grid .ui-strong { color: #253b30; font-size: 32rpx; }
+.bar-stat { padding-top: 18rpx; font-size: 24rpx; }
+.bar-stat .ui-strong { font-size: 34rpx; font-weight: 500; }
+.next-card,.tools,.simple-order { box-shadow: none; border: 1rpx solid #e4ebe4; border-radius: 16rpx; }
+.next-card { padding: 24rpx; }
+.next-card > .ui-strong { font-size: 28rpx; }
+.next-card > text { line-height: 1.6; }
+.tools { padding: 24rpx 8rpx; }
+.tools > view { gap: 12rpx; font-size: max(12px, 22rpx); }
+.tools > .unavailable text { font-size: max(12px, 18rpx); }
+.tool-icon { width: 56rpx; height: 56rpx; border-radius: 10rpx; background: #0c6d5d; }
+.alert-layer { padding: 58rpx; background: rgba(12,27,22,.68); backdrop-filter: none; }
+.alert-card { border-radius: 22rpx; background: linear-gradient(180deg,#fff0db,#fff 36%); }
+.alert-info { background: transparent; margin: 0 24rpx; }
+.alert-info > view { border-bottom: 0; padding: 17rpx 10rpx; }
+.alert-card button { background: #f58b12; border-radius: 12rpx; }
+.detail-scroll { padding: 18rpx 24rpx 150rpx; }
+.delivery-state { border-radius: 16rpx 16rpx 0 0; background: #fff; color: #08695a; border-bottom: 1rpx solid #e5eae3; }
+.delivery-state .clock { background: #0a7360; }
+.detail-card { margin-top: 0; padding: 26rpx; border-radius: 0; box-shadow: none; border-bottom: 1rpx solid #edf0e9; }
+.detail-card.note:last-child { border-radius: 0 0 16rpx 16rpx; }
+.customer,.address-block { gap: 20rpx; }
+.address-block .ui-strong { line-height: 1.5; }
+.address-block button { width: 90rpx; height: 90rpx; border-radius: 12rpx; gap: 6rpx; flex-shrink: 0; }
+.address-block button .ui-small { white-space: nowrap; font-size: max(12px, 20rpx); }
+.product-line { padding-top: 15rpx; }
+.sign-options > view { border: 1rpx solid #dfe7dd; border-radius: 16rpx; box-shadow: 0 4rpx 14rpx rgba(30,55,43,.03); }
+.sign-options > view.active { border-color: #267968; background: #f2f6ef; }
+.sign-options > view > .sign-icon { flex: 0 0 58rpx; background: transparent; }
+.sign-options .ui-small { color: #819084; font-size: max(12px, 22rpx); line-height: 1.5; }
+.proof-photo { height: 320rpx; border: 1rpx dashed #a8beb0; border-radius: 16rpx; background: #edf3eb; }
+.proof-empty { display: flex; flex-direction: column; align-items: center; gap: 16rpx; color: #5f7a67; font-size: 25rpx; }
+.proof-empty .ui-small { font-size: max(12px, 21rpx); }
+.proof-photo > .retake { border-radius: 8rpx; font-size: max(12px, 21rpx); }
+.call-screen { position: relative; background: #03483f url('/static/design/mountain-contours-gold.svg') center 120rpx/120% auto no-repeat; }
+.call-screen .status-only { width: 100%; display: flex; justify-content: space-between; gap: 20rpx; padding: 30rpx 0; color: #b9d3c7; font-size: max(12px, 22rpx); }
+.call-avatar { width: 122rpx; height: 122rpx; margin-top: 26rpx; display: flex; align-items: center; justify-content: center; border: 3rpx solid rgba(255,255,255,.7); border-radius: 50%; background: rgba(255,255,255,.18); }
+.call-screen .calling { margin-top: 24rpx; }
+.call-screen .caller { font-size: 40rpx; }
+.call-screen .caller-phone { color: #bed3c8; font-size: max(12px, 22rpx); }
+.customer-preview { display: flex; flex-direction: column; margin-top: 54rpx; padding: 30rpx; background: rgba(255,255,255,.09); border-radius: 16rpx; }
+.customer-preview > view { display: flex; justify-content: space-between; gap: 18rpx; }
+.call-actions > view { display: flex; flex-direction: column; align-items: center; gap: 20rpx; }
+@media (max-height: 700px) {
+ .login-brand { margin-top: 25rpx; }
+ .login-form { margin-top: 35rpx; padding-bottom: 40rpx; }
+ .courier-mark { height: 110rpx; }
+}
+
+.login-landscape { position: absolute; inset: 0; width: 100%; height: 100%; }
+.login-screen::before { content: ""; position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg,rgba(163,202,190,.65),rgba(242,248,242,.65)); pointer-events: none; }
+.login-screen :deep(.mobile-header) { z-index: 3; }
+
+/* 触控目标：主要操作按钮不小于 44px */
+.double-action button,.single-action button,.add-ticket,.logout-button{min-height:44px}.customer button{min-width:44px;min-height:44px}

@@ -30,6 +30,6 @@ export default {
 .nav-item { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6rpx; color: #7d8c87; }
 .nav-item.active { color: #0b5949; font-weight: 650; }
 .bottom-icon { width: 44rpx; height: 40rpx; display: grid; place-items: center; }
-.nav-label { font-size: 20rpx; line-height: 1; letter-spacing: .2rpx; }
-.bottom-badge { position: absolute; top: 1rpx; right: 25%; min-width: 28rpx; height: 28rpx; padding: 0 7rpx; display: grid; place-items: center; border: 2rpx solid #fff; border-radius: 16rpx; color: #fff; background: #d6574b; font-size: 15rpx; }
+.nav-label { font-size:max(12px, 20rpx); line-height: 1; letter-spacing: .2rpx; }
+.bottom-badge { position: absolute; top: 1rpx; right: 25%; min-width: 28rpx; height: 28rpx; padding: 0 7rpx; display: grid; place-items: center; border: 2rpx solid #fff; border-radius: 16rpx; color: #fff; background: #d6574b; font-size:max(12px, 15rpx); }
 </style>

@@ -1,0 +1,66 @@
+.shop-page.screen-auth { background: #fbfcf8; }
+.auth-scroll { height: 100%; background: #fbfcf8; }
+.auth-scroll button::after { border: 0; }
+.auth-shell { display: flex; flex-direction: column; width: 100%; max-width: 480px; min-height: 100vh; min-height: 100dvh; margin: 0 auto; padding: 0 28px; background: #fbfcf8; }
+.auth-nav { box-sizing: content-box; display: flex; align-items: center; min-height: 52px; padding-right: 92px; flex-shrink: 0; }
+.auth-brand { display: flex; align-items: center; gap: 10px; color: #173b2e; font-size: 17px; font-weight: 650; letter-spacing: 1px; white-space: nowrap; }
+.auth-mark { display: block; width: 32px; height: 32px; flex-shrink: 0; }
+.auth-hero { position: relative; padding: 34px 0 32px; overflow: hidden; flex-shrink: 0; }
+.auth-headline { position: relative; z-index: 1; display: flex; flex-direction: column; color: #153e2e; font-size: 36px; font-weight: 650; line-height: 1.35; letter-spacing: -1px; }
+.auth-landscape { position: absolute; width: 190px; height: 181px; top: 20px; right: -23px; }
+.auth-tagline { position: relative; z-index: 1; display: block; margin-top: 14px; color: #647769; font-size: 14px; line-height: 1.7; letter-spacing: 1px; }
+.auth-main { padding-top: 27px; border-top: 1px solid #e1e8dc; }
+.auth-form-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.auth-title { color: #173b2e; font-size: 23px; font-weight: 650; line-height: 1.4; }
+.auth-mode-switch { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin: 0 -8px 0 0; padding: 0 8px; min-height: 44px; color: #0f725d; background: transparent; font-size: 14px; line-height: 1.5; border-radius: 8px; }
+.auth-chevron { display: block; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-top: 1.5px solid currentColor; transform: rotate(45deg); flex-shrink: 0; }
+.auth-description { display: block; color: #6b7b70; font-size: 13px; line-height: 1.7; margin-top: 2px; }
+.auth-form { margin-top: 25px; }
+.auth-field + .auth-field { margin-top: 19px; }
+.auth-label { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; color: #2e4839; font-size: 14px; font-weight: 550; line-height: 1.5; }
+.auth-input-wrap { display: flex; align-items: center; min-height: 54px; padding: 0 16px; border: 1px solid #dce4d7; border-radius: 12px; background: #fff; color: #183c2d; transition: border-color .15s, box-shadow .15s; }
+.auth-input-wrap.is-focused, .auth-input-wrap:focus-within { border-color: #4e8771; box-shadow: 0 0 0 3px #e7eee1; }
+.auth-input-wrap.is-invalid { border-color: #bc5d49; box-shadow: 0 0 0 2px #f7eee8; }
+.auth-input-wrap input { flex: 1; width: 0; min-width: 0; height: 52px; color: #173b2e; font-size: 16px; line-height: normal; }
+.auth-placeholder { color: #879386; font-size: 15px; }
+.auth-prefix { padding-right: 13px; margin-right: 13px; border-right: 1px solid #dde5d8; color: #47614f; font-size: 15px; line-height: 18px; }
+.auth-password-toggle { display: flex; align-items: center; justify-content: center; min-width: 44px; height: 48px; padding: 0; margin: 0 -10px 0 0; border-radius: 8px; background: transparent; }
+.auth-submit { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; height: 54px; margin: 27px 0 0; padding: 0 22px; border-radius: 12px; color: #fff; background: #0b4f40; font-size: 17px; font-weight: 600; line-height: 1.5; letter-spacing: 2px; }
+.auth-submit-arrow { position: absolute; right: 20px; font-size: 23px; font-weight: 400; letter-spacing: 0; }
+.auth-submit[disabled] { color: #f3f6ef; background: #648374; }
+.auth-divider { display: flex; align-items: center; gap: 16px; margin: 25px 0 17px; }
+.auth-divider view { flex: 1; height: 1px; background: #e1e8dc; }
+.auth-divider text { color: #778574; font-size: 12px; line-height: 18px; }
+.auth-wechat { display: flex; align-items: center; justify-content: center; gap: 9px; height: 50px; margin: 0; padding: 0 16px; border: 1px solid #d7e3d7; border-radius: 12px; color: #23513d; background: #f0f5ec; font-size: 15px; line-height: 1.5; }
+.auth-wechat[disabled] { color: #6b7b70; background: #eef1e9; }
+.auth-mode-switch[disabled] { color: #879386; background: transparent; }
+.auth-error { display: block; margin-top: 14px; color: #a44131; font-size: 13px; line-height: 1.7; }
+.auth-binding-note { margin-top: 18px; padding: 12px 14px; border-radius: 10px; background: #edf2e7; color: #4c6652; font-size: 13px; line-height: 1.7; }
+.auth-optional { color: #7a8979; font-size: 12px; font-weight: 400; }
+.auth-station-picker .auth-input-wrap { justify-content: space-between; gap: 12px; font-size: 15px; }
+.auth-station-picker .auth-chevron { transform: rotate(135deg); margin: -3px 2px 0; }
+.auth-station-help { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 4px; color: #6b7b70; font-size: 12px; line-height: 1.7; }
+.auth-station-help button { margin: 0; padding: 0 4px; min-height: 44px; color: #0f725d; background: transparent; font-size: 12px; line-height: 44px; }
+.auth-address-wrap { padding: 13px 16px; }
+.auth-address-wrap textarea { width: 100%; height: 68px; color: #173b2e; font-size: 15px; line-height: 1.7; }
+.auth-footer { display: flex; align-items: center; flex-direction: column; gap: 12px; margin-top: auto; padding: 48px 0 calc(27px + env(safe-area-inset-bottom)); color: #7b8977; font-size: 12px; line-height: 1.5; letter-spacing: 2px; }
+.auth-footer-line { width: 24px; height: 2px; background: #b8ccaf; border-radius: 2px; }
+.auth-demo { margin-top: 18px; padding: 0 8px; min-height: 44px; color: #6b7b70; background: transparent; font-size: 12px; line-height: 44px; }
+.auth-register .auth-hero { padding: 19px 0 24px; }
+.auth-register .auth-headline { font-size: 30px; }
+.auth-register .auth-landscape { width: 162px; height: 154px; top: 0; }
+.auth-register .auth-tagline { margin-top: 10px; }
+.auth-register .auth-main { padding-top: 18px; }
+.auth-mode-switch:focus-visible, .auth-password-toggle:focus-visible, .auth-submit:focus-visible, .auth-wechat:focus-visible, .auth-station-picker:focus-visible { outline: 2px solid #4e8771; outline-offset: 3px; }
+@media (max-width: 360px) {
+  .auth-shell { padding: 0 22px; }
+  .auth-hero { padding-top: 24px; padding-bottom: 27px; }
+  .auth-headline { font-size: 32px; }
+  .auth-landscape { width: 165px; height: 157px; right: -25px; top: 17px; }
+  .auth-title { font-size: 21px; }
+  .auth-mode-switch { font-size: 13px; }
+  .auth-footer { padding-top: 34px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-input-wrap { transition: none; }
+}

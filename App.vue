@@ -36,7 +36,7 @@
 	text { line-height: 1.42; }
 	.ui-strong { font-weight: 650; }
 	.ui-bold { font-weight: 650; }
-	.ui-small { color: #6f807a; font-size: 22rpx; }
+	.ui-small { color: #6f807a; font-size:max(12px, 22rpx); }
 	.ui-paragraph { display: block; }
 	.ui-i { font-style: normal; }
 </style>
