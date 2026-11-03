@@ -1,5 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+// Log.enable 会回放同一页面此前检查留下的日志；只统计本脚本开始之后的浏览器错误，避免把上一个检查的错误算到本检查。
+const qaScriptStartedAt = Date.now()
 
 const endpoint = `http://127.0.0.1:${process.env.CDP_PORT || '9225'}`
 const baseUrl = process.env.MOBILE_URL || 'http://127.0.0.1:4174'
@@ -22,7 +24,7 @@ const runtimeExceptions = []
 socket.addEventListener('message', ({ data }) => {
   const message = JSON.parse(data)
   if (message.method === 'Runtime.exceptionThrown') runtimeExceptions.push(message.params.exceptionDetails.text)
-  if (message.method === 'Log.entryAdded' && message.params.entry.level === 'error') runtimeExceptions.push(message.params.entry.text)
+  if (message.method === 'Log.entryAdded' && message.params.entry.level === 'error' && !(message.params.entry.timestamp < qaScriptStartedAt)) runtimeExceptions.push(message.params.entry.text)
   if (!message.id || !pending.has(message.id)) return
   const task = pending.get(message.id)
   pending.delete(message.id)

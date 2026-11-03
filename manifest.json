@@ -2,8 +2,8 @@
     "name" : "桶装水",
     "appid" : "__UNI__2AB25DD",
     "description" : "山泉到家用户订水、会员水票与送水员配送应用",
-    "versionName" : "1.0.8",
-    "versionCode" : "108",
+    "versionName" : "1.0.13",
+    "versionCode" : "113",
     "transformPx" : false,
     /* 5+App特有相关 */
     "app-plus" : {

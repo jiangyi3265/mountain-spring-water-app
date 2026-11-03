@@ -1,6 +1,10 @@
 <script>
+	import { cleanupDisplaySources } from './services/imageFiles.js'
+	import { clearUnconsentedSessions } from './services/privacy.js'
+
 	export default {
-		onLaunch() {},
+		// 附件临时文件只在组件卸载时删除；进程被杀时会残留，启动时统一清理
+		onLaunch() { clearUnconsentedSessions(); cleanupDisplaySources() },
 		onShow() {},
 		onHide() {}
 	}

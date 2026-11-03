@@ -101,6 +101,8 @@ test('旧版单商品结算缓存仍能读取；售后按商品与数量提交',
   const order = loadPage('order', { showToast() {} }, { createAftersale: async data => { created.push(data); return data } })
   const ctx = { ...order.data(), selectedOrder: { id: 'DD1', amount: '40.00', refundedAmount: 0, ticketAmount: 0, status: '已完成' }, refundType: 'resend', refundLines: [{ skuCode: 'A', quantity: 1 }, { skuCode: 'B', quantity: 0 }], refundableAmount: 40, refundImages: [], appConfig: {} }
   for (const [key, method] of Object.entries(order.methods)) ctx[key] = method.bind(ctx)
+  // Bind the real computed policy just as Vue does; submitting now validates the available type.
+  for (const [key, getter] of Object.entries(order.computed)) Object.defineProperty(ctx, key, { get: () => getter.call(ctx), configurable: true })
   ctx.open = () => {}
   await ctx.submitRefund()
   assert.deepEqual(created[0].items, [{ skuCode: 'A', quantity: 1 }])

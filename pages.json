@@ -27,6 +27,10 @@
 				"navigationStyle": "custom",
 				"navigationBarTitleText": "山泉配送"
 			}
+		},
+		{
+			"path": "pages/legal/index",
+			"style": { "navigationStyle": "custom", "navigationBarTitleText": "协议与隐私" }
 		}
 	],
 	"globalStyle": {

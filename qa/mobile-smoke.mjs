@@ -1,5 +1,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { resolve, relative, isAbsolute } from 'node:path'
+import { OrderStore } from '../../water-api/lib/order-store.mjs'
+import { createBusinessStore } from '../../water-api/lib/business-store.mjs'
+import { seedLegacyAftersale } from '../../water-api/test/legacy-aftersale-fixture.mjs'
+// Log.enable 会回放同一页面此前检查留下的日志；只统计本脚本开始之后的浏览器错误，避免把上一个检查的错误算到本检查。
+const qaScriptStartedAt = Date.now()
 
 const endpoint = 'http://127.0.0.1:' + (process.env.CDP_PORT || '9225')
 const baseUrl = process.env.MOBILE_URL || 'http://127.0.0.1:4174'
@@ -37,7 +42,7 @@ const requests = new Map()
 socket.addEventListener('message', (event) => {
   const message = JSON.parse(event.data)
   if (message.method === 'Runtime.exceptionThrown') browserErrors.push(message.params.exceptionDetails.text)
-  if (message.method === 'Log.entryAdded' && message.params.entry.level === 'error') browserErrors.push(message.params.entry.text)
+  if (message.method === 'Log.entryAdded' && message.params.entry.level === 'error' && !(message.params.entry.timestamp < qaScriptStartedAt)) browserErrors.push(message.params.entry.text)
   if (message.method === 'Network.requestWillBeSent') requests.set(message.params.requestId, message.params.request.url)
   if (message.method === 'Network.responseReceived') {
     const { response } = message.params
@@ -155,11 +160,18 @@ assert(Boolean(paidOrderId), '成功页显示真实订单编号')
 const paidOrder = await api(`/orders/${encodeURIComponent(paidOrderId)}`)
 assert(paidOrder.payStatus === '已支付' && paidOrder.status === '待配送', '支付成功对应服务端已支付且待配送状态')
 
+// 规则变更（2026-09-28 业主决定）：纸质水票只能由水站在后台发放入账，客户不能再凭票号自助绑定。
+// 原“输入 JT000238 → 确认绑定”步骤改为：说明页不再提供绑定输入框；后台发放后水票自动出现在“我的水票”。
 await navigate('pages/member/index?screen=bind')
-await evaluate(`(() => { const input=document.querySelector('.code-input input');input.value='JT000238';input.dispatchEvent(new Event('input',{bubbles:true})) })()`)
-await evaluate(`document.querySelector('.main-button').click()`)
-await delay(750)
-assert(Boolean(await evaluate('document.querySelector(".ticket-summary")')), '纸质水票绑定后返回水票资产页')
+assert(!(await evaluate('Boolean(document.querySelector(".code-input"))')), '纸质水票说明页不再提供自助绑定输入框')
+assert(/水站发放/.test(await evaluate('document.body.innerText')), '纸质水票说明页提示由水站发放')
+const smokeCustomer = await api('/account')
+const paperStart = 100000 + (Date.now() % 800000)
+const paperBatch = await api('/ticket-batches', { method: 'POST', role: 'admin', body: { prefix: 'SMK', start: paperStart, end: paperStart, station: smokeCustomer.stationName, customerId: smokeCustomer.id, note: 'mobile-smoke 后台发放' } })
+await navigate('pages/member/index?screen=tickets')
+await evaluate(`[...document.querySelectorAll('.segment *')].find(node=>node.textContent.trim().startsWith('纸质水票'))?.click()`)
+await waitFor(`document.body.innerText.includes(${JSON.stringify(paperBatch.firstTicket)})`, '后台发放的纸质水票自动出现在我的水票')
+assert(Boolean(await evaluate('document.querySelector(".ticket-summary")')), '水票资产页正常显示')
 await screenshot('mobile-tickets')
 
 await evaluate(`localStorage.removeItem('mountain-spring-cart');localStorage.removeItem('mountain-spring-checkout')`)
@@ -185,8 +197,23 @@ assert(ticketOrder.payment === '水票支付' && ticketOrder.payStatus === '已�
 const heldOrder = await api('/orders', { method: 'POST', body: { sku: 'water-18_9l', quantity: 2, payment: '余额支付', idempotencyKey: `browser-partial-return-${Date.now()}` } })
 await api(`/orders/${heldOrder.id}/pay`, { method: 'POST', body: {} })
 await api(`/orders/${heldOrder.id}/assign`, { method: 'POST', role: 'admin', body: { courierId: 'courier-001' } })
-const partialSale = await api('/aftersales', { method: 'POST', body: { orderId: heldOrder.id, type: '退货退款', amount: 29.95, returnQuantity: 1, reason: 'isolated browser partial-return acceptance' } })
-for (const status of ['已通过', '已完成']) await api(`/admin/aftersales/${partialSale.id}/status`, { method: 'PUT', role: 'admin', body: { status } })
+// This is a pre-policy historical state, no longer accepted for new requests.
+// Keep the original hold/re-entry assertions using the explicit upgrade fixture.
+const fixtureFile = resolve(process.env.WATER_API_DATA_FILE || '')
+const fixtureRuntime = resolve(import.meta.dirname, '../../.qa-runtime')
+const fixtureRelative = relative(fixtureRuntime, fixtureFile)
+if (!['127.0.0.1', 'localhost'].includes(new URL(apiBase).hostname) ||
+    process.env.WATER_API_DEMO_DATA_ENABLED !== 'true' || !fixtureRelative ||
+    fixtureRelative.startsWith('..') || isAbsolute(fixtureRelative) ||
+    fixtureFile !== resolve(outputDir, '../acceptance.sqlite')) throw new Error('Legacy fixture requires this run’s isolated acceptance.sqlite')
+const legacyStore = new OrderStore({ filePath: fixtureFile, seedDemoData: false })
+let partialSale
+try {
+  await legacyStore.init()
+  partialSale = seedLegacyAftersale(createBusinessStore(legacyStore, { seedDemoData: false }), heldOrder.id, { amount: 29.95, quantity: 1 })
+} finally { legacyStore.db?.close() }
+const legacyReadback = await api(`/orders/${heldOrder.id}`)
+assert(legacyReadback.refundedAmount === 29.95 && legacyReadback.aftersalePolicy.returnItems[0].quantity === 1, '隔离历史夹具金额及剩余商品由真实API回读')
 for (let visit = 0; visit < 2; visit += 1) {
   await navigate('pages/order/index?screen=orders')
   await waitFor(`Boolean([...document.querySelectorAll('.order-card')].find(n=>n.textContent.includes(${JSON.stringify(heldOrder.id)})))`, '客户重新读取部分退货订单')
@@ -209,6 +236,7 @@ await screenshot('mobile-aftersale-result')
 
 await navigate('pages/delivery/index?screen=login')
 await evaluate(`(() => { const inputs=document.querySelectorAll('.login-form input');const set=(input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}))};set(inputs[0],'13812345678');set(inputs[1],'123456') })()`)
+await evaluate(`(()=>{const t=document.querySelector('.consent-toggle');if(t&&!document.querySelector('.consent-notice .uni-checkbox-input svg'))t.click()})()`)
 await evaluate(`document.querySelector('.login-form uni-button').click()`)
 await waitFor(`Boolean(document.querySelector('.alert-card')) || Boolean(document.querySelector('.work-scroll'))`, '送水员登录并同步服务端资料')
 const hasAlert = Boolean(await evaluate('document.querySelector(".alert-card")'))

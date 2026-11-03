@@ -33,12 +33,14 @@ function writeSession(role, session, epoch = authEpochs.get(role) || 0) {
 }
 
 function clearSession(role) {
+  authEpochs.set(role, (authEpochs.get(role) || 0) + 1)
 	try { uni.removeStorageSync(storageKey(role)) } catch (error) { console.warn('[session-clear]', error) }
 	try { uni.setStorageSync(`${AUTH_REQUIRED_KEY}_${role}`, '1') } catch (error) { console.warn('[auth-flag]', error) }
 }
 
 function saveAuthRequest(role, startRequest) {
   if (logoutRequests.has(role)) return Promise.reject(new Error('退出处理中，请稍后登录'))
+  authEpochs.set(role, (authEpochs.get(role) || 0) + 1)
   const epoch = authEpochs.get(role) || 0
   return startRequest().then(session => writeSession(role, session, epoch))
 }
@@ -58,8 +60,28 @@ function logout(role) {
   return task
 }
 
+function captureSession(role = 'customer') {
+  return { role, epoch: authEpochs.get(role) || 0, token: uni.getStorageSync(storageKey(role))?.token || null }
+}
+function isCurrentSession(identity) {
+  if (identity.epoch !== (authEpochs.get(identity.role) || 0)) return false
+  const token = uni.getStorageSync(storageKey(identity.role))?.token || null
+  // No initial token allows an automatic local-demo login, but explicit login advances epoch.
+  return !identity.token || identity.token === token
+}
+function staleSessionError() {
+  return Object.assign(new Error('登录身份已变化，已忽略旧请求'), { code: 'STALE_SESSION' })
+}
+
 function authRequired(role) {
 	try { return uni.getStorageSync(`${AUTH_REQUIRED_KEY}_${role}`) === '1' } catch { return false }
+}
+
+/** 访客浏览：没有有效会话、也不能自动（本地联调演示）登录时返回 false，调用方据此跳过受保护接口而不触发登录跳转。 */
+async function canRestoreSession(role) {
+	if (readSession(role)) return true
+	const config = await getConfig()
+	return Boolean(config.demoAuth) && !authRequired(role)
 }
 
 /**
@@ -82,24 +104,47 @@ function rawRequest(path, { method = 'GET', data, token, silent = false } = {}) 
 				if (response.statusCode >= 200 && response.statusCode < 300 && payload?.code === 0) return resolve(payload.data)
 				const error = /** @type {Error & { statusCode: number }} */ (new Error(payload?.message || `接口请求失败（${response.statusCode}）`))
 				error.statusCode = response.statusCode
-				if (!silent) uni.showToast({ title: error.message, icon: 'none' })
+				if (!silent) toastRequestError(error.message)
 				reject(error)
 			},
 			fail(cause) {
-				const error = new Error('协同服务暂时不可用，请稍后重试')
+				// 保留真机上常见的失败原因，便于区分域名未加入小程序合法域名、超时和证书问题
+				const detail = String(cause?.errMsg || '')
+				const reason = /domain list|合法域名/i.test(detail) ? '（域名未配置）' : /timeout|超时/i.test(detail) ? '（网络超时）' : /ssl|certificate|证书/i.test(detail) ? '（证书异常）' : ''
+				if (detail) console.warn('[water-api] request failed', path, detail)
+				const error = new Error(`协同服务暂时不可用，请稍后重试${reason}`)
 				error.cause = cause
-				if (!silent) uni.showToast({ title: error.message, icon: 'none' })
+				if (!silent) toastRequestError(error.message)
 				reject(error)
 			},
 		})
 	})
 }
 
+function clientConfig(config) {
+	let miniProgram = false
+	// #ifdef MP-WEIXIN
+	miniProgram = true
+	// #endif
+	const wechatPay = Boolean(config.wechatPay && miniProgram && typeof uni.requestPayment === 'function')
+	const simulatedPayments = Boolean(config.simulatedPayments && !config.wechatPay)
+	return { ...config, wechatPay, simulatedPayments,
+		wechatLogin: Boolean(config.wechatLogin && miniProgram && typeof uni.login === 'function'),
+		onlineRecharge: Boolean(config.onlineRecharge && (wechatPay || simulatedPayments)),
+		wechatPayMessage: config.wechatPay && !wechatPay ? '请在微信小程序中使用微信支付或在线充值' : '在线支付暂未开通，请联系所属水站',
+	}
+}
+
+async function requireOnlinePayment(recharge = false) {
+	const config = await getConfig(true)
+	if (!(recharge ? config.onlineRecharge : config.wechatPay || config.simulatedPayments)) throw new Error(config.wechatPayMessage || '在线支付暂未开通')
+}
+
 async function getConfig(force = false) {
 	if (configCache && !force) return configCache
 	if (!configRequest) {
 		configRequest = rawRequest('/config', { silent: true })
-			.then(config => { configCache = config; return config })
+			.then(config => { configCache = clientConfig(config); return configCache })
 			.catch(() => ({ demoAuth: false, simulatedPayments: false, wechatLogin: false, wechatPay: false }))
 			.finally(() => { configRequest = null })
 	}
@@ -110,6 +155,11 @@ let loginNavigationPending = false
 function showLogin(role) {
   const route = role === 'courier' ? 'pages/delivery/index' : 'pages/index/index'
   const screen = role === 'courier' ? 'login' : 'auth'
+  // 只在当前页面属于该角色时跳转：客户与配送员切换途中，另一角色迟到的 401 只清掉它自己的会话（调用前已清），
+  // 不把用户拉回刚离开的角色；该角色下次操作时会重新要求登录。
+  const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+  const current = pages[pages.length - 1]?.route
+  if (current && (current === 'pages/delivery/index') !== (role === 'courier')) return
   if (loginNavigationPending) return
   loginNavigationPending = true
   uni.reLaunch({ url: `/${route}?screen=${screen}`, complete: () => { loginNavigationPending = false } })
@@ -120,6 +170,7 @@ const hooks = { onAuthRequired: showLogin }
 
 async function login(role, credentials = {}, force = false) {
   if (logoutRequests.has(role)) throw new Error('退出处理中，请稍后登录')
+  if (force) authEpochs.set(role, (authEpochs.get(role) || 0) + 1)
   const epoch = authEpochs.get(role) || 0
 	if (!force) {
 		const cached = readSession(role)
@@ -143,27 +194,55 @@ async function login(role, credentials = {}, force = false) {
 	return promise
 }
 
+// 接口层弹出的错误提示；页面的 catch 常会再弹同一句，页面提示前先检查，避免同一错误出现两次。
+let lastRequestToast = { title: '', at: 0 }
+/** @param {string} title */
+function toastRequestError(title) {
+	lastRequestToast = { title: String(title), at: Date.now() }
+	uni.showToast({ title, icon: 'none' })
+}
+/**
+ * 1.5 秒内接口层已弹出同一句提示时返回 true，并且只抵消一次：接口层弹一次对应页面 catch 的一次，
+ * 紧接着另一个操作以同一句话失败时仍会正常提示。 @param {unknown} title
+ */
+function recentlyToasted(title) {
+	const hit = Boolean(title) && lastRequestToast.title === String(title) && Date.now() - lastRequestToast.at < 1500
+	if (hit) lastRequestToast = { title: '', at: 0 }
+	return hit
+}
+
 /**
  * @param {string} path
  * @param {{ method?: UniApp.RequestOptions['method'], data?: any, role?: string, silent?: boolean, retry?: boolean }} options
  */
 async function request(path, { method = 'GET', data, role = 'customer', silent = false, retry = true } = {}) {
-	let session
-	try {
-		session = await login(role)
-	} catch (error) {
-		if (/** @type {any} */ (error).code === 'AUTH_REQUIRED') hooks.onAuthRequired(role)
-		throw error
-	}
-	try {
-		return await rawRequest(path, { method, data, token: session.token, silent })
-	} catch (error) {
-		if (retry && /** @type {Error & { statusCode?: number }} */ (error).statusCode === 401) {
-			try { uni.removeStorageSync(storageKey(role)) } catch (cause) { console.warn('[session-clear]', cause) }
-			return request(path, { method, data, role, silent, retry: false })
-		}
-		throw error
-	}
+  const started = captureSession(role)
+  let session
+  try {
+    session = await login(role)
+    if (!isCurrentSession(started)) throw staleSessionError()
+  } catch (error) {
+    if (isCurrentSession(started) && error.code === 'AUTH_REQUIRED') hooks.onAuthRequired(role)
+    throw error
+  }
+  const identity = captureSession(role)
+  try {
+    const result = await rawRequest(path, { method, data, token: session.token, silent: true })
+    if (!isCurrentSession(identity)) throw staleSessionError()
+    return result
+  } catch (error) {
+    // A second 401 of the same invalidated session may join the login-required path;
+    // a late response from another identity must never delete/retry under its new token.
+    const sameEpoch = identity.epoch === (authEpochs.get(role) || 0)
+    const removedBy401 = sameEpoch && !uni.getStorageSync(storageKey(role))?.token && !authRequired(role)
+    if (!isCurrentSession(identity) && !(error.statusCode === 401 && removedBy401)) throw staleSessionError()
+    if (retry && error.statusCode === 401) {
+      try { uni.removeStorageSync(storageKey(role)) } catch (cause) { console.warn('[session-clear]', cause) }
+      return request(path, { method, data, role, silent, retry: false })
+    }
+    if (!silent && error.code !== 'STALE_SESSION') toastRequestError(error.message)
+    throw error
+  }
 }
 
 /**
@@ -189,7 +268,37 @@ function readFileAsBase64(filePath) {
 	return task
 }
 
+/** Order-list pagination only; never silently fall back to the truncated legacy endpoint.
+ * @param {{ page?: number, pageSize?: number, status?: string }} [params]
+ * @param {string} role
+ * @returns {Promise<any>}
+ */
+async function listOrderPages(params = {}, role = 'customer') {
+	const identity = captureSession(role)
+	const rows = new Map()
+	let page = params.page || 1, total
+	for (;;) {
+		const result = await request(`/orders${queryString({ ...params, page, pageSize: params.pageSize || 100 })}`, { role, silent: true })
+		if (!isCurrentSession(identity)) throw staleSessionError()
+		if (!Array.isArray(result?.items) || !Number.isInteger(result.total) || result.total < 0 || result.page !== page || !Number.isInteger(result.pageSize) || result.pageSize < 1 || (!result.items.length && (page - 1) * result.pageSize < result.total)) throw new Error('订单分页数据异常，请刷新重试')
+		if (params.page) return result
+		if (total !== undefined && total !== result.total) throw new Error('订单列表发生变化，请刷新重试')
+		total = result.total
+		const before = rows.size
+		for (const order of result.items) rows.set(order.id, order)
+		if (page * result.pageSize >= result.total) {
+			if (rows.size < result.total) throw new Error('订单列表发生变化，请刷新重试')
+			return [...rows.values()]
+		}
+		if (rows.size === before) throw new Error('订单分页没有前进，请刷新重试')
+		page += 1
+	}
+}
+
 export const waterApi = {
+	recentlyToasted,
+	captureSession,
+	isCurrentSession,
 	async getAttachment(path, role = 'customer') {
 		if (!/^\/api\/uploads\/[a-f0-9]{24}\.(jpg|png|webp)$/.test(path)) throw new Error('附件地址不合法')
 		const result = await request(`${path.slice(4)}/content`, { role, silent: true })
@@ -204,29 +313,33 @@ export const waterApi = {
 	health: () => rawRequest('/health', { silent: true }),
 	// ---- 认证 ----
 	hasSession: role => Boolean(readSession(role)),
+	canRestoreSession,
 	authRequired,
 	login,
 	loginWithPassword: (role, phone, password) => login(role, { phone, password }, true),
     register: data => saveAuthRequest('customer', () => rawRequest('/auth/register', { method: 'POST', data, silent: true })),
     wechatLogin: data => saveAuthRequest('customer', () => rawRequest('/auth/wechat', { method: 'POST', data, silent: true })),
-	changePassword: (role, oldPassword, newPassword) => request(role === 'courier' ? '/courier/password' : '/account/password', { method: 'PUT', data: { oldPassword, newPassword }, role }),
+	// changePassword / exchangePoints / claimCoupon 的错误由页面 catch 统一提示；接口层静默，避免同一错误弹两次。
+	changePassword: (role, oldPassword, newPassword) => request(role === 'courier' ? '/courier/password' : '/account/password', { method: 'PUT', data: { oldPassword, newPassword }, role, silent: true }),
 	getProfile: role => readSession(role)?.profile || null,
     logout,
     clearLocalSession: clearSession,
 	// ---- 账户 ----
 	updateAccount: data => request('/account', { method: 'PUT', data }),
-	exchangePoints: couponId => request('/points/exchange', { method: 'POST', data: { couponId } }),
+	exchangePoints: couponId => request('/points/exchange', { method: 'POST', data: { couponId }, silent: true }),
 	getReferral: () => request('/account/referral', { silent: true }),
 	listAvailableTickets: sku => request(`/account/tickets/available${queryString({ sku })}`, { silent: true }),
 	/** 上传本地图片，返回 { url } */
 	uploadImage: async (filePath, role = 'customer') => {
+		const identity=captureSession(role)
 		const data = await readFileAsBase64(filePath)
+		if(!isCurrentSession(identity))throw staleSessionError()
 		if (data.length > 2 * 1024 * 1024 * 1.4) throw new Error('图片不能超过 2MB')
 		return request('/uploads', { method: 'POST', data: { data }, role })
 	},
 	// ---- 在线充值 ----
 	listRechargePackages: () => rawRequest('/recharge/packages', { silent: true }),
-	createRecharge: data => request('/recharges', { method: 'POST', data }),
+	createRecharge: async data => { const identity=captureSession('customer');await requireOnlinePayment(true);if(!isCurrentSession(identity))throw staleSessionError(); return request('/recharges', { method: 'POST', data }) },
 	listRecharges: () => request('/recharges', { silent: true }),
 	getRecharge: id => request(`/recharges/${encodeURIComponent(id)}`, { silent: true }),
 	simulateRecharge: id => request(`/recharges/${encodeURIComponent(id)}/simulate-pay`, { method: 'POST' }),
@@ -244,14 +357,17 @@ export const waterApi = {
 	listCatalogCategories: () => rawRequest('/catalog/categories', { silent: true }),
 	listCatalogStations: () => rawRequest('/catalog/stations', { silent: true }),
 	// ---- 订单 ----
-	listOrders: params => request(`/orders${queryString(params)}`, { silent: true }),
-	listCourierOrders: params => request(`/orders${queryString(params)}`, { role: 'courier', silent: true }),
+	// Explicit page returns metadata; legacy array callers (including home counts) traverse every page.
+	listOrders: params => listOrderPages(params, 'customer'),
+	listCourierOrders: params => listOrderPages(params, 'courier'),
+	getCourierOrder: id => request(`/orders/${encodeURIComponent(id)}`, { role: 'courier', silent: true }),
+	recoverOrder: key => request(`/orders/recovery?idempotencyKey=${encodeURIComponent(key)}`, { silent: true }),
 	getOrder: id => request(`/orders/${encodeURIComponent(id)}`, { silent: true }),
 	/** 服务端报价：商品金额、水票抵扣、优惠券、配送费与应付金额，与下单同一套计价 */
 	previewOrder: data => request('/orders/preview', { method: 'POST', data, silent: true }),
-	createOrder: data => request('/orders', { method: 'POST', data }),
+	createOrder: async data => { const identity=captureSession('customer');if (data.payment === '微信支付') await requireOnlinePayment();if(!isCurrentSession(identity))throw staleSessionError(); return request('/orders', { method: 'POST', data }) },
 	payOrder: (id, data) => request(`/orders/${encodeURIComponent(id)}/pay`, { method: 'POST', data }),
-	wechatPrepay: orderId => request('/payments/wechat/prepay', { method: 'POST', data: { orderId } }),
+	wechatPrepay: async orderId => { const identity=captureSession('customer');await requireOnlinePayment();if(!isCurrentSession(identity))throw staleSessionError(); return request('/payments/wechat/prepay', { method: 'POST', data: { orderId } }) },
 	cancelOrder: (id, data = {}) => request(`/orders/${encodeURIComponent(id)}/cancel`, { method: 'POST', data }),
 	confirmReceipt: id => request(`/orders/${encodeURIComponent(id)}/confirm-receipt`, { method: 'POST' }),
 	acceptOrder: id => request(`/orders/${encodeURIComponent(id)}/accept`, { method: 'POST', role: 'courier' }),
@@ -262,7 +378,7 @@ export const waterApi = {
 	getAccount: () => request('/account', { silent: true }),
 	listAccountTransactions: () => request('/account/transactions', { silent: true }),
 	listCoupons: () => request('/coupons', { silent: true }),
-	claimCoupon: id => request(`/coupons/${encodeURIComponent(id)}/claim`, { method: 'POST' }),
+	claimCoupon: id => request(`/coupons/${encodeURIComponent(id)}/claim`, { method: 'POST', silent: true }),
 	listAftersales: () => request('/aftersales', { silent: true }),
 	createAftersale: data => request('/aftersales', { method: 'POST', data }),
 }

@@ -20,7 +20,10 @@ export default {
 		ticketOnly: { type: Boolean, default: false },
 		/** 服务端配置：是否已接入微信支付 / 是否开发模式模拟支付 */
 		wechatPay: { type: Boolean, default: false },
+		wechatPayMessage: { type: String, default: '在线支付暂未开通' },
 		simulatedPayments: { type: Boolean, default: false },
+		/** 非空时禁用微信支付并显示原因（如账号未绑定微信 openid，建单后无法预下单） */
+		wechatBlockedMessage: { type: String, default: '' },
 		balance: { type: Number, default: 0 },
 		payable: { type: Number, default: 0 }
 	},
@@ -28,10 +31,10 @@ export default {
 	computed: {
 		items() {
 			if (this.ticketOnly) return [{ id: 'ticket', icon: 'ticket', name: '水票支付', note: '已用水票全额抵扣，无需付款', disabled: false }]
-			const wechatDisabled = !this.wechatPay && !this.simulatedPayments
+			const wechatDisabled = Boolean(this.wechatBlockedMessage) || (!this.wechatPay && !this.simulatedPayments)
 			const balanceDisabled = this.balance < this.payable
 			return [
-				{ id: 'wechat', icon: 'wallet', name: '微信支付', note: this.wechatPay ? '微信安全支付' : this.simulatedPayments ? '本地联调模拟支付' : '需商户号配置后开放', disabled: wechatDisabled },
+				{ id: 'wechat', icon: 'wallet', name: '微信支付', note: this.wechatBlockedMessage || (this.wechatPay ? '微信安全支付' : this.simulatedPayments ? '本地联调模拟支付' : this.wechatPayMessage), disabled: wechatDisabled },
 				{ id: 'balance', icon: 'wallet', name: '余额支付', note: balanceDisabled ? `余额 ¥${this.balance.toFixed(2)} 不足` : `余额 ¥${this.balance.toFixed(2)}`, disabled: balanceDisabled },
 				{ id: 'cod', icon: 'order', name: '货到付款', note: '送水员送达时现金或当面扫码收款', disabled: false }
 			]

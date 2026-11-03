@@ -34,6 +34,9 @@
 .auth-wechat { display: flex; align-items: center; justify-content: center; gap: 9px; height: 50px; margin: 0; padding: 0 16px; border: 1px solid #d7e3d7; border-radius: 12px; color: #23513d; background: #f0f5ec; font-size: 15px; line-height: 1.5; }
 .auth-wechat[disabled] { color: #6b7b70; background: #eef1e9; }
 .auth-mode-switch[disabled] { color: #879386; background: transparent; }
+.auth-browse { display: flex; align-items: center; gap: 8px; margin: 0 0 0 auto; padding: 0 8px; min-height: 44px; color: #47614f; background: transparent; font-size: 14px; line-height: 1.5; border-radius: 8px; }
+.auth-browse::after { border: 0; }
+.auth-browse[disabled] { color: #879386; background: transparent; }
 .auth-error { display: block; margin-top: 14px; color: #a44131; font-size: 13px; line-height: 1.7; }
 .auth-binding-note { margin-top: 18px; padding: 12px 14px; border-radius: 10px; background: #edf2e7; color: #4c6652; font-size: 13px; line-height: 1.7; }
 .auth-optional { color: #7a8979; font-size: 12px; font-weight: 400; }
@@ -64,3 +67,6 @@
 @media (prefers-reduced-motion: reduce) {
   .auth-input-wrap { transition: none; }
 }
+
+.auth-wechat-primary { display:flex; align-items:center; justify-content:center; gap:10px; }
+.auth-other { margin:12px 0 0; padding:12px; min-height:44px; color:#0b6653; background:transparent; font-size:14px; line-height:20px; }

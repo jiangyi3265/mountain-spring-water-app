@@ -1,5 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+// Log.enable 会回放同一页面此前检查留下的日志；只统计本脚本开始之后的浏览器错误，避免把上一个检查的错误算到本检查。
+const qaScriptStartedAt = Date.now()
 
 const endpoint = `http://127.0.0.1:${process.env.CDP_PORT || '9225'}`
 const baseUrl = process.env.MOBILE_URL || 'http://127.0.0.1:4174'
@@ -22,7 +24,7 @@ const requests = new Map()
 socket.addEventListener('message', ({ data }) => {
   const message = JSON.parse(data)
   if (message.method === 'Runtime.exceptionThrown') browserErrors.push(message.params.exceptionDetails.text)
-  if (message.method === 'Log.entryAdded' && message.params.entry.level === 'error') browserErrors.push(message.params.entry.text)
+  if (message.method === 'Log.entryAdded' && message.params.entry.level === 'error' && !(message.params.entry.timestamp < qaScriptStartedAt)) browserErrors.push(message.params.entry.text)
   if (message.method === 'Network.requestWillBeSent') requests.set(message.params.requestId, message.params.request.url)
   if (message.method === 'Network.responseReceived' && message.params.response.url.includes('/api/') && message.params.response.status >= 400) apiFailures.push(`${message.params.response.status} ${message.params.response.url}`)
   if (message.method === 'Network.loadingFailed') {

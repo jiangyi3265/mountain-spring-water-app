@@ -1,12 +1,11 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import { pageContext } from './order-pagination-harness.mjs'
 
-const source = readFileSync(new URL('../pages/index/index.vue', import.meta.url), 'utf8').split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm, '').replace('export default', 'return')
 function fixture(api = {}, uni = {}) {
-  const component = new Function('uni', 'waterApi', 'MobileHeader', 'WaterJug', 'ProductRow', 'BottomNav', 'AppIcon', source)(uni, api)
-  const ctx = { ...component.data(), showToast() {}, loadProfile() {} }
-  for (const [key, value] of Object.entries(component.methods)) ctx[key] = value.bind(ctx)
+  const { ctx } = pageContext('index', api, { setStorageSync() {}, ...uni })
+  ctx.authConsent = true // These existing cases exercise explicitly consented login attempts.
   ctx.showToast = () => {}; ctx.loadProfile = () => {}
   ctx.authForm.phone = '13888888888'; ctx.authForm.password = 'testpass'
   return ctx
@@ -42,15 +41,17 @@ test('切换登录与注册清除明文密码和微信绑定状态', () => {
   assert.equal(ctx.authPasswordVisible, false); assert.equal(ctx.authError, '')
 })
 
-test('微信授权防止重复点击，428转入已有账号绑定，绑定只携带账号密码', async () => {
+test('微信一键登录防止重复点击，主动绑定已有账号时获取新code且验证账号密码', async () => {
   let requests = 0, options, payload
-  const ctx = fixture({ wechatLogin: async value => { requests++; payload = value; if (!value.phone) throw Object.assign(new Error('bind'), { statusCode: 428 }) } }, { login: value => { options = value } })
+  const ctx = fixture({ wechatLogin: async value => { requests++; payload = value } }, { login: value => { options = value } })
   ctx.wechatAuth(); ctx.wechatAuth(); await ctx.submitAuth()
   assert.equal(ctx.wechatSubmitting, true); assert.equal(requests, 0)
   await options.success({ code: 'wechat-code' })
-  assert.equal(requests, 1); assert.equal(ctx.wechatSubmitting, false); assert.equal(ctx.pendingWechatCode, 'wechat-code')
-  ctx.authForm.password = 'testpass'; await ctx.submitAuth()
-  assert.deepEqual(payload, { code: 'wechat-code', phone: '13888888888', password: 'testpass' })
+  assert.equal(requests, 1); assert.equal(ctx.wechatSubmitting, false); assert.equal(ctx.pendingWechatCode, ''); assert.deepEqual(payload, { code: 'wechat-code' }); assert.equal(ctx.screen, 'home')
+  ctx.openWechatBinding(); ctx.authConsent = true
+  ctx.authForm.password = 'testpass'; const binding = ctx.submitAuth()
+  options.success({ code: 'fresh-binding-code' }); await binding
+  assert.deepEqual(payload, { code: 'fresh-binding-code', phone: '13888888888', password: 'testpass' })
   assert.equal(ctx.pendingWechatCode, ''); assert.equal(ctx.screen, 'home')
 })
 

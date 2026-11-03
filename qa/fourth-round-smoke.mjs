@@ -1,5 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+// Log.enable 会回放同一页面此前检查留下的日志；只统计本脚本开始之后的浏览器错误，避免把上一个检查的错误算到本检查。
+const qaScriptStartedAt = Date.now()
 
 const endpoint = 'http://127.0.0.1:' + (process.env.CDP_PORT || '9225')
 const baseUrl = process.env.MOBILE_URL || 'http://127.0.0.1:4174'
@@ -37,7 +39,7 @@ const requests = new Map()
 socket.addEventListener('message', (event) => {
   const message = JSON.parse(event.data)
   if (message.method === 'Runtime.exceptionThrown') browserErrors.push(message.params.exceptionDetails.text)
-  if (message.method === 'Log.entryAdded' && message.params.entry.level === 'error') browserErrors.push(message.params.entry.text)
+  if (message.method === 'Log.entryAdded' && message.params.entry.level === 'error' && !(message.params.entry.timestamp < qaScriptStartedAt)) browserErrors.push(message.params.entry.text)
   if (message.method === 'Network.requestWillBeSent') requests.set(message.params.requestId, message.params.request.url)
   if (message.method === 'Network.responseReceived') {
     const { response } = message.params
@@ -156,6 +158,7 @@ await api(`/orders/${cod.id}/assign`, { method: 'POST', role: 'admin', body: { c
 await api(`/orders/${cod.id}/accept`, { method: 'POST', role: 'courier', body: {} })
 await navigate('pages/delivery/index?screen=login')
 await evaluate(`(() => { const inputs=document.querySelectorAll('.login-form input');const set=(input,value)=>{input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}))};set(inputs[0],'13812345678');set(inputs[1],'123456') })()`)
+await evaluate(`(()=>{const t=document.querySelector('.consent-toggle');if(t&&!document.querySelector('.consent-notice .uni-checkbox-input svg'))t.click()})()`)
 await evaluate(`document.querySelector('.login-form uni-button').click()`)
 await waitFor(`Boolean(document.querySelector('.work-scroll'))`, '送水员登录工作台')
 assert(!(await evaluate('document.body.innerText')).includes('未接入'), '工作台不再展示未接入的假功能入口')
@@ -172,6 +175,9 @@ await evaluate(`(() => { const input=document.querySelector('.ticket-input input
 await evaluate(`document.querySelector('.add-ticket').click()`)
 await waitFor(`document.querySelector('.ticket-form')?.innerText.includes('应收 ¥0.00')`, '收一张票后试算应收 ¥0.00（整单抵扣免配送费）')
 await screenshot('fourth-courier-ticket')
+// 2026-09-28 接手复核 T19：签收页展示本次签收订单并需显式勾选确认（默认不勾选），防止签错单。
+assert((await evaluate(`document.querySelector('.sign-target')?.innerText || ''`)).includes(cod.id), '签收页核对卡片显示本次签收的订单号')
+await evaluate(`document.querySelector('.confirm-check').click()`)
 await evaluate(`document.querySelector('.single-action uni-button').click()`)
 let signed = null
 for (let attempt = 0; attempt < 40; attempt += 1) { signed = await api(`/orders/${cod.id}`); if (signed.status === '已完成') break; await delay(150) }

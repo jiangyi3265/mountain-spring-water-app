@@ -2,7 +2,10 @@
 	<view class="mobile-header" :class="{ dark: dark, transparent: transparent }" :style="{ paddingTop: layout.statusHeight + 'px' }">
 		<view class="nav-bar" :style="{ height: layout.navHeight + 'px', paddingLeft: layout.sideWidth + 'px', paddingRight: layout.sideWidth + 'px' }">
 			<button v-if="back" class="nav-back" aria-label="返回" @click="$emit('back')"><view class="back-chevron" /></button>
-			<text class="nav-title">{{ title }}</text>
+			<view v-if="layout.navHeight > 0" class="nav-heading">
+				<text v-if="title || !demo" class="nav-title">{{ title }}</text>
+				<text v-if="demo" class="nav-demo">演示 · 虚拟资产</text>
+			</view>
 		</view>
 	</view>
 </template>
@@ -13,7 +16,7 @@ import { navigationMetrics } from '../services/navigation.js'
 export default {
 	name: 'MobileHeader',
 	emits: ['back', 'layout'],
-	data() { return { layout: navigationMetrics() } },
+	data() { return { layout: navigationMetrics(), demo: import.meta.env.VITE_WATER_DEMO === 'true' } },
 	props: {
 		title: { type: String, default: '' },
 		back: { type: Boolean, default: true },
@@ -51,7 +54,9 @@ export default {
 .mobile-header.dark { color: #fff; background: #173d35; }
 .mobile-header.dark.transparent { background: transparent; }
 .nav-bar { position: relative; display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
-.nav-title { display: block; width: 100%; overflow: hidden; font-size: 16px; font-weight: 600; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.nav-heading { display: flex; flex-direction: column; justify-content: center; width: 100%; min-width: 0; height: 44px; max-height: 100%; overflow: hidden; }
+.nav-title { display: block; width: 100%; overflow: hidden; font-size: 16px; line-height: 22px; font-weight: 600; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.nav-demo { display: block; width: 100%; overflow: hidden; font-size: 10px; line-height: 14px; text-align: center; text-overflow: ellipsis; white-space: nowrap; opacity: .8; }
 .nav-back { position: absolute; left: 8px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: 0; padding: 0; border: 0; border-radius: 10px; color: inherit; background: transparent; }
 .nav-back::after { border: 0; }
 .nav-back:active { transform: translateY(-50%); background: rgba(104,170,155,.12); }

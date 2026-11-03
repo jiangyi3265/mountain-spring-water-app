@@ -12,7 +12,7 @@ const read = (path) => readFileSync(resolve(root, path), 'utf8')
 test('详情立即购买不受购物车勾选影响；空购物车不得隐式购买详情商品', () => {
   const source = read('pages/index/index.vue').split('<script>')[1].split('</script>')[0].replace(/^import .*$/gm, '').replace('export default', 'return')
   const writes = [], navigations = [], messages = []
-  const component = new Function('uni', 'MobileHeader', 'WaterJug', 'ProductRow', 'BottomNav', 'AppIcon', source)({ setStorageSync: (key, value) => writes.push({ key, value }), navigateTo: value => navigations.push(value) })
+  const component = new Function('uni', 'MobileHeader', 'WaterJug', 'ProductRow', 'BottomNav', 'AppIcon', 'ConsentNotice', source)({ setStorageSync: (key, value) => writes.push({ key, value }), navigateTo: value => navigations.push(value) })
   const ctx = { screen: 'detail', detailProduct: { sku: 'detail-B', name: '商品B', price: 20 }, account: { stationName: '中央站' }, stations: [], cartStations: [{ name: '中央站', items: [{ sku: 'cart-A', checked: true, qty: 3 }] }], showToast: message => messages.push(message) }
   component.methods.openOrder.call(ctx)
   assert.deepEqual(writes[0].value.items.map(item => [item.sku, item.qty]), [['detail-B', 1]])
@@ -46,8 +46,9 @@ test('迟到付款的已取消订单不能展示支付成功页', async () => {
 test('微信绑定只接受既有密码账号且真实支付只由支付流程确认', () => {
   const shop = read('pages/index/index.vue')
   const order = read('pages/order/index.vue')
-  assert.match(shop, /if\(bindingWechat\)\{await waterApi\.wechatLogin\(\{code:this\.pendingWechatCode,phone:form\.phone,password:form\.password\}\)/)
-  assert.match(shop, /authMode='login'; this\.pendingWechatCode=res\.code/)
+  assert.match(shop, /if\(bindingWechat\)\{const code=await this\.freshWechatCode\(\);await waterApi\.wechatLogin\(\{code,phone:form\.phone,password:form\.password\}\)/)
+  assert.match(shop, /openWechatBinding\(\)/)
+  assert.match(shop, /wechatLogin\(\{ code: res\.code \}\)/)
   assert.doesNotMatch(shop, /if\(bindingWechat\)\{let newlyRegistered|newlyRegistered=true/)
   assert.doesNotMatch(shop, /wechatLogin\(\{code:this\.pendingWechatCode,\.\.\.payload\}\)/)
   assert.doesNotMatch(shop, /wechatLogin\(\{[^}]*name:|wechatLogin\(\{[^}]*address:/)

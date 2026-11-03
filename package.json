@@ -11,7 +11,7 @@
     "dev:h5": "cross-env UNI_INPUT_DIR=. uni --host 127.0.0.1",
     "lint": "eslint App.vue main.js uni.promisify.adaptor.js services components pages vite.config.js",
     "typecheck": "vue-tsc -p tsconfig.json --noEmit",
-    "test": "node --test qa/frontend-contract.test.mjs qa/logout-contract.test.mjs qa/auth-form.test.mjs qa/navigation.test.mjs qa/checkout-regression.test.mjs",
+    "test": "node --test qa/wechat-onetap.test.mjs qa/privacy-consent.test.mjs qa/frontend-contract.test.mjs qa/logout-contract.test.mjs qa/auth-form.test.mjs qa/navigation.test.mjs qa/checkout-regression.test.mjs qa/payment-platform.test.mjs qa/order-pagination.test.mjs qa/order-pagination-api.test.mjs qa/followup-business.test.mjs qa/followup-business-api.test.mjs qa/review-fixes.test.mjs qa/load-more-queue.test.mjs qa/toast-dedupe.test.mjs qa/check-build.test.mjs qa/round2-mobile.test.mjs qa/review-fixes-api.test.mjs qa/ui-async.test.mjs",
     "qa:failure-smoke": "node qa/failure-mode-smoke.mjs",
     "qa:acceptance": "npm run lint && npm run typecheck && npm test && npm run build:h5 && npm run build:mp-weixin",
     "build:h5": "cross-env UNI_INPUT_DIR=. uni build",

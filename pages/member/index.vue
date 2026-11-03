@@ -10,22 +10,20 @@
 					<view class="ticket-item" v-for="ticket in visibleTickets" :key="ticket.code" @click="selectTicket(ticket)"><view class="ticket-stub"><text>{{ticket.type}}</text><text class="ui-strong">{{ticket.value}}</text></view><view class="ticket-copy"><text class="ui-strong">{{ticket.productName || '18.9L桶装水'}}</text><text>防伪码 {{ticket.code}} · 有效期至 {{ticket.date}}</text><text>{{ticket.station}}</text></view><text class="ticket-count">{{ticket.status}}　›</text></view>
 					<view v-if="!visibleTickets.length" class="empty-ticket">当前没有{{ticketTab}}</view>
 				</view>
-				<text class="ticket-note">水票用于兑换18.9L桶装水，部分商品除外</text><button class="wide-light" @click="open('bind')">＋ 绑定纸质水票</button>
+				<text class="ticket-note">水票用于兑换18.9L桶装水，部分商品除外</text><view class="info-card paper-note"><text class="ui-strong">纸质水票如何入账</text><text>{{paperTicketNote}}</text><button class="wide-light" @click="callStation">联系水站</button></view>
 			</template>
 
 			<template v-else-if="screen==='ticket-detail'">
-				<view class="detail-ticket"><view class="ticket-top"><text>清泉到家 · {{selectedTicket?.type || '水票'}}</text><text class="ui-strong">1<text class="ui-small"> 张</text></text><text>{{selectedTicket?.productName || '18.9L桶装水'}}</text><text>防伪码 {{selectedTicket?.code || '--'}}</text><text>{{selectedTicket?.station || '清泉站点'}}</text></view><button class="main-button" @click="goHome">去订水，用水票抵扣</button></view>
-				<view class="info-card"><text class="ui-strong">使用说明</text><text>• {{selectedTicket?.productName ? `本票仅限兑换「${selectedTicket.productName}」` : '本票仅限兑换18.9L桶装水'}}</text><text>• 可在下单时抵扣；货到付款订单也可在送水员上门时交票抵扣</text><text>• 每次使用1张，不可拆分或转让</text><text>• 仅限清泉到家指定站点使用</text><text>• 请在有效期内使用，过期自动作废</text></view>
+				<view class="detail-ticket"><view class="ticket-top"><text>山泉到家 · {{selectedTicket?.type || '水票'}}</text><text class="ui-strong">1<text class="ui-small"> 张</text></text><text>{{selectedTicket?.productName || '18.9L桶装水'}}</text><text>防伪码 {{selectedTicket?.code || '--'}} · 有效期至 {{selectedTicket?.date || '--'}}</text><text>{{selectedTicket?.station || '山泉到家'}}</text></view><button v-if="selectedTicket?.status==='可用'" class="main-button" @click="goHome">去订水，用水票抵扣</button><button v-else class="main-button unavailable-button" disabled>{{selectedTicket?.status || '水票'}}，不可抵扣</button></view>
+				<view class="info-card"><text class="ui-strong">使用说明</text><text>• {{selectedTicket?.productName ? `本票仅限兑换「${selectedTicket.productName}」` : '本票仅限兑换18.9L桶装水'}}</text><text>• 可在下单时抵扣；货到付款订单也可在送水员上门时交票抵扣</text><text>• 每次使用1张，不可拆分或转让</text><text>• 仅限山泉到家指定站点使用</text><text>• 请在有效期内使用，过期自动作废</text></view>
 				<view class="info-card"><view class="title-row"><text class="ui-strong">核销记录</text><text>{{records.length}} 条</text></view><view class="record" v-for="r in records" :key="r.date"><text>{{r.date}}</text><text>{{r.status}}</text></view><text v-if="!records.length" class="empty-record">{{ selectedTicket?.status==='可用' ? '尚未核销，送水员送达时可凭此票核销' : '暂无核销记录' }}</text></view>
 			</template>
 
 			<template v-else-if="screen==='bind'">
-				<view class="scan-copy"><text class="ui-strong">请扫描纸质水票防伪码</text><text>将防伪码放入框内，自动识别</text></view>
-				<view class="scan-frame"><view class="corner c1"></view><view class="corner c2"></view><view class="corner c3"></view><view class="corner c4"></view><view class="paper-ticket"><text>清泉到家</text><text class="ui-small">纸质水票</text><text>防伪码：</text><text class="ui-strong">XXXX XXXX</text><view class="qr"><AppIcon name="qr" size="62rpx" tone="muted"/></view></view><view class="scan-line"></view></view>
-				<button class="camera-button" @click="scanTicket"><AppIcon name="camera" size="29rpx" tone="light"/>打开相机扫描</button>
-				<view class="or-line"><text>或手动输入防伪码</text></view>
-				<input v-model="ticketCode" class="code-input" placeholder="请输入防伪码（如：JT000238）" />
-				<button class="main-button" @click="bindTicket">确认绑定</button><text class="bind-help" @click="toast('纸质水票由清泉到家官方发行，每张仅可绑定一次')">绑定说明 ›</text>
+				<!-- 纸质水票只能由水站在后台发放入账，客户不能凭票号自助绑定；保留此屏兼容旧入口链接，只做说明 -->
+				<view class="scan-copy"><text class="ui-strong">纸质水票由水站发放</text><text>水站发放后，水票会自动显示在“我的水票”</text></view>
+				<view class="info-card"><text class="ui-strong">入账说明</text><text>{{paperTicketNote}}</text><text>为防止票号被他人冒领，纸质水票不能凭票号自助绑定。</text></view>
+				<button class="main-button" @click="callStation">联系水站</button><button class="wide-light paper-back" @click="open('tickets')">查看我的水票</button>
 			</template>
 
 			<template v-else-if="screen==='balance'">
@@ -35,12 +33,12 @@
 
 			<template v-else-if="screen==='recharge'">
 				<view class="balance-hero recharge-hero"><text>当前余额(元)</text><text class="ui-strong">{{Number(account.balance || 0).toFixed(2)}}</text></view>
-				<view v-if="!appConfig.onlineRecharge" class="info-card"><text class="ui-strong">暂未开通在线充值</text><text>请联系所属水站线下充值，入账后余额会实时显示在这里。</text></view>
+				<view v-if="!appConfig.onlineRecharge" class="info-card"><text class="ui-strong">充值说明</text><text>{{ appConfig.wechatPayMessage || '请联系所属水站线下充值，入账后余额会实时显示在这里。' }}</text></view>
 				<template v-else>
 					<view class="recharge-grid"><view v-for="pkg in rechargePackages" :key="pkg.id" class="recharge-option" :class="{active: rechargePackageId===pkg.id}" @click="pickPackage(pkg)"><text class="ui-strong">¥{{Number(pkg.amount).toFixed(0)}}</text><text>{{Number(pkg.bonus) > 0 ? `送 ¥${Number(pkg.bonus).toFixed(2)}` : pkg.name}}</text></view></view>
 					<view class="info-card"><text class="ui-strong">其他金额</text><input v-model="rechargeCustom" class="code-input" type="digit" maxlength="7" placeholder="输入 1–5000 元（不参与赠送）" @focus="rechargePackageId=''" /></view>
 					<button class="main-button" :disabled="recharging" @click="submitRecharge">{{ recharging ? '正在处理…' : `充值 ¥${rechargeAmountLabel}` }}</button>
-					<text class="ticket-note">{{ appConfig.wechatPay ? '微信支付完成后自动计入余额，可用于下单支付' : '本地联调环境使用模拟支付' }}</text>
+					<text class="ticket-note">{{ appConfig.wechatPay ? '支付结果确认后计入余额，可用于下单支付；到账状态请查看充值记录' : '本地联调环境使用模拟支付' }}</text>
 				</template>
 				<view class="info-card"><view class="title-row"><text class="ui-strong">充值记录</text><text>{{recharges.length}} 条</text></view><view class="balance-record" v-for="item in recharges" :key="item.id"><view><text class="ui-strong">充值 ¥{{Number(item.amount).toFixed(2)}}{{Number(item.bonus) > 0 ? ` · 赠 ¥${Number(item.bonus).toFixed(2)}` : ''}}</text><text>{{String(item.createdAt || '').replace('T',' ').slice(0,16)}} · {{item.id}}</text></view><view><text class="ui-strong" :class="item.state==='已支付' ? 'plus' : 'minus'">{{item.state}}</text></view></view><text v-if="!recharges.length" class="empty-record">暂无充值记录</text></view>
 			</template>
@@ -48,14 +46,14 @@
 			<template v-else-if="screen==='points'">
 				<view class="points-hero"><text>我的积分</text><text class="ui-strong">{{account.points || 0}}<text class="ui-small"> 积分</text></text><view class="gift-orbit"><view class="points-coin">¥</view></view></view>
 				<view class="points-tabs"><text v-for="tab in pointTabs" :key="tab" :class="{active:pointTab===tab}" @click="pointTab=tab">{{tab}}</text><text @click="showPointsRule">规则</text></view>
-				<view class="gift-grid"><view v-for="coupon in visibleCoupons" :key="coupon.couponId" class="gift-card" :class="{'unavailable-card':coupon.customerCouponId && coupon.customerStatus!=='未使用'}" @click="pickCoupon(coupon)"><view class="gift-image coupon"><view class="coupon-face"><text class="currency">¥</text><text>{{Number(coupon.discount).toFixed(0)}}</text></view></view><text class="ui-strong">{{coupon.name}}</text><text>{{couponHint(coupon)}}</text></view></view>
+				<view class="gift-grid"><view v-for="coupon in visibleCoupons" :key="coupon.couponId" class="gift-card" :class="{'unavailable-card':(coupon.customerCouponId && coupon.customerStatus!=='未使用') || couponSoldOut(coupon) || claimingCouponId===coupon.couponId}" @click="pickCoupon(coupon)"><view class="gift-image coupon"><view class="coupon-face"><text class="currency">¥</text><text>{{Number(coupon.discount).toFixed(0)}}</text></view></view><text class="ui-strong">{{coupon.name}}</text><text>{{couponHint(coupon)}}</text></view></view>
 				<view v-if="!visibleCoupons.length" class="empty-record">{{ pointTab==='全部' ? '暂无优惠券活动' : `当前没有${pointTab}的优惠券` }}</view>
 			</template>
 
 			<template v-else>
 				<view class="membership-hero"><view class="profile"><view class="profile-avatar">{{String(account.name || '用').slice(0,1)}}</view><view><text class="ui-strong">{{account.name || '用户'}}</text><text>{{maskedPhone}}</text></view></view><view class="member-card"><text class="member-level">{{account.level || '清泉银卡'}}</text><text class="ui-small">累计消费 ¥{{Number(account.totalSpent || 0).toFixed(2)}} · {{account.paidOrders || 0}} 笔 · 积分 {{account.points || 0}}</text><view class="member-progress-copy"><text>{{ account.nextLevelGap > 0 ? `再消费 ¥${Number(account.nextLevelGap).toFixed(2)} 升级` : '已是最高等级' }}</text><text>¥{{Number(account.totalSpent || 0).toFixed(2)}}</text></view><view class="progress"><text class="ui-i" :style="{width: levelProgress + '%'}"></text></view></view></view>
-				<view class="benefit-card"><text class="ui-strong">会员权益</text><view class="benefit-grid"><view v-for="benefit in benefits" :key="benefit.name"><view class="benefit-icon"><AppIcon :name="benefit.icon" size="32rpx" tone="warm"/></view><text class="ui-strong">{{benefit.name}}</text><text class="ui-small">{{benefit.note}}</text></view></view></view>
-				<view class="level-card"><text class="ui-strong">会员等级说明</text><view class="level" v-for="level in levels" :key="level.name" :class="{current:level.current}"><text class="check">✓</text><view><text class="ui-strong">{{level.name}}</text><text class="ui-small">{{level.note}}</text></view><text v-if="level.current">当前等级</text></view></view>
+				<view class="benefit-card"><text class="ui-strong">会员服务</text><view class="benefit-grid"><view v-for="benefit in benefits" :key="benefit.name"><view class="benefit-icon"><AppIcon :name="benefit.icon" size="32rpx" tone="warm"/></view><text class="ui-strong">{{benefit.name}}</text><text class="ui-small">{{benefit.note}}</text></view></view><text class="ticket-note">优惠券需自行领取或积分兑换，使用条件以券面和结算页为准。</text></view>
+				<view class="level-card"><text class="ui-strong">会员等级说明</text><view class="level" v-for="level in levels" :key="level.name" :class="{current:level.current}"><text class="check">✓</text><view><text class="ui-strong">{{level.name}}</text><text class="ui-small">{{level.note}}</text></view><text v-if="level.current">当前等级</text></view><text class="ticket-note">等级按账户累计消费计算，退款后可能调整。</text></view>
 			</template>
 		</scroll-view>
 		<view v-if="screen==='tickets'||screen==='balance'||screen==='points'||screen==='membership'" class="asset-nav"><view @click="goHome"><AppIcon name="home" size="36rpx" tone="muted"/><text>首页</text></view><view :class="{active:screen==='tickets'}" @click="open('tickets')"><AppIcon name="ticket" size="36rpx"/><text>水票</text></view><view :class="{active:screen==='points'}" @click="open('points')"><AppIcon name="gift" size="36rpx"/><text>商城</text></view><view :class="{active:screen==='membership'||screen==='balance'}" @click="open('membership')"><AppIcon name="user" size="36rpx"/><text>我的</text></view></view>
@@ -69,15 +67,15 @@ import { waterApi } from '../../services/waterApi.js'
 
 export default {
 	components:{MobileHeader,AppIcon},
-	data(){return{ headerHeight: 44,
-		screen:'tickets',ticketTab:'电子水票',ticketCode:'',selectedTicket:null,pointTab:'全部',pointTabs:['全部','可领取','积分兑换','已领取'],
-		tickets:[],ticketError:'',assetError:'',appConfig:{onlineRecharge:false,wechatPay:false,simulatedPayments:false},rechargePackages:[],recharges:[],rechargePackageId:'',rechargeCustom:'',recharging:false,account:{balance:0,points:0,name:'',phone:'',level:'清泉银卡',totalSpent:0,nextLevelGap:0,paidOrders:0},coupons:[],
+	data(){return{ headerHeight: 44, readRevisions: {}, readEpoch: 0, pageDisposed: false, 
+		screen:'tickets',ticketTab:'电子水票',stations:[],selectedTicket:null,pointTab:'全部',pointTabs:['全部','可领取','积分兑换','已领取'],
+		tickets:[],ticketError:'',assetError:'',appConfig:{onlineRecharge:false,wechatPay:false,simulatedPayments:false,wechatPayMessage:''},rechargePackages:[],recharges:[],rechargePackageId:'',rechargeCustom:'',recharging:false,account:{id:'',balance:0,points:0,name:'',phone:'',stationName:'',level:'清泉银卡',totalSpent:0,nextLevelGap:0,paidOrders:0},coupons:[],claimingCouponId:'',
 		balanceRecords:[],ledgerTab:'余额',
-		benefits:[{icon:'coupon',name:'优惠券抵扣',note:'领取或积分兑换后下单直接抵扣'},{icon:'points',name:'消费得积分',note:'每消费 1 元得 1 积分'},{icon:'truck',name:'配送时段',note:'下单可选配送时段'},{icon:'gift',name:'积分兑换',note:'积分可兑换优惠券'}],
-		levelDefs:[{name:'清泉银卡',note:'注册即享，累计消费满 1000 元升级金卡'},{name:'清泉金卡',note:'累计消费满 1000 元，享优先派单'},{name:'清泉钻石卡',note:'累计消费满 3000 元，享专属客服'}]
+		benefits:[{icon:'coupon',name:'优惠券抵扣',note:'满足用券条件后，下单时选择使用'},{icon:'points',name:'消费积分',note:'按订单实付整元累计，退款相应扣回'},{icon:'ticket',name:'账户水票',note:'查看可用水票及适用商品'},{icon:'gift',name:'积分兑换',note:'可兑换商城中标有积分价格的优惠券'}],
+		levelDefs:[{name:'清泉银卡',note:'累计消费未满 1000 元'},{name:'清泉金卡',note:'累计消费满 1000 元，未满 3000 元'},{name:'清泉钻石卡',note:'累计消费满 3000 元'}]
 	}},
 	computed:{
-		pageTitle(){return{tickets:'我的水票','ticket-detail':'水票详情',bind:'绑定纸质票',balance:'我的余额',recharge:'余额充值',points:'积分商城',membership:'会员中心'}[this.screen]},
+		pageTitle(){return{tickets:'我的水票','ticket-detail':'水票详情',bind:'纸质水票说明',balance:'我的余额',recharge:'余额充值',points:'积分商城',membership:'会员中心'}[this.screen]},
 		rechargeAmountLabel(){const pkg=this.rechargePackages.find(item=>item.id===this.rechargePackageId);if(pkg)return Number(pkg.amount).toFixed(2);const amount=Number(this.rechargeCustom);return Number.isFinite(amount)&&amount>0?amount.toFixed(2):'0.00'},
 		availableTicketCount(){return this.tickets.filter(ticket=>ticket.status==='可用').length},
 		visibleTickets(){return this.ticketTab==='电子水票'?this.tickets.filter(i=>i.type==='电子'):this.tickets.filter(i=>i.type==='纸质')},
@@ -87,34 +85,77 @@ export default {
 		levels(){return this.levelDefs.map(level=>({...level,current:level.name===(this.account.level||'清泉银卡')}))},
 		levelProgress(){const spent=Number(this.account.totalSpent||0);const gap=Number(this.account.nextLevelGap||0);if(gap<=0)return 100;const target=spent+gap;return target>0?Math.max(6,Math.min(100,Math.round(spent/target*100))):0},
 		visibleRecords(){return this.ledgerTab==='余额'?this.balanceRecords.filter(item=>item.kind==='余额'):this.balanceRecords},
-		visibleCoupons(){return this.coupons.filter(coupon=>{if(this.pointTab==='可领取')return !coupon.customerCouponId&&!coupon.pointsCost;if(this.pointTab==='积分兑换')return coupon.pointsCost>0;if(this.pointTab==='已领取')return !!coupon.customerCouponId;return true})},
+		visibleCoupons(){return this.coupons.filter(coupon=>{if(this.pointTab==='可领取')return !coupon.customerCouponId&&!coupon.pointsCost&&!this.couponSoldOut(coupon);if(this.pointTab==='积分兑换')return coupon.pointsCost>0;if(this.pointTab==='已领取')return !!coupon.customerCouponId;return true})},
+		/** 客户所属水站（与首页联系水站同一查找规则） */
+		contactStation(){return this.stations.find(item=>item.name===this.account.stationName)||(this.stations.length===1?this.stations[0]:null)},
+		paperTicketNote(){const station=this.contactStation;return `纸质水票由水站发放到您的账户，发放后自动显示在这里；如已购票未显示，请联系${station?`${station.name}${station.phone?`（电话 ${station.phone}）`:''}`:'所属水站'}`},
 		records(){if(!this.selectedTicket)return [];const ticket=this.selectedTicket;return ticket.status==='已核销'?[{date:String(ticket.redeemedAt||'').replace('T',' ').slice(0,16),status:'已核销'}]:[]}
 	},
-	onLoad(query){if(query&&query.screen)this.screen=query.screen;waterApi.getConfig().then(config=>{this.appConfig=config});this.loadTickets();this.loadAssets();if(this.screen==='recharge')this.loadRecharge()},
+	onLoad(query){if(query&&query.screen)this.screen=query.screen;waterApi.getConfig().then(config=>{this.appConfig=config});this.loadTickets();this.loadAssets();if(this.screen==='recharge')this.loadRecharge();if(['tickets','bind'].includes(this.screen))this.loadStations()},
 	onShow(){this.$nextTick(() => { const header = /** @type {{ refresh?: () => void }} */ (this.$refs.mobileHeader); header?.refresh?.() });this.loadTickets();this.loadAssets()},
+	onUnload(){this.pageDisposed=true;this.invalidateReads()},
 	methods:{
-		open(name){this.screen=name;uni.pageScrollTo({scrollTop:0,duration:0});if(name==='tickets')this.loadTickets();if(['balance','points','membership','recharge'].includes(name))this.loadAssets();if(name==='recharge')this.loadRecharge()},
+    invalidateReads(){this.readEpoch++},
+    readGuard(key){const epoch=this.readEpoch,revision=(this.readRevisions[key]||0)+1;this.readRevisions[key]=revision;const identity=waterApi.captureSession?.('customer');return ()=>!this.pageDisposed&&epoch===this.readEpoch&&revision===this.readRevisions[key]&&(!identity||waterApi.isCurrentSession(identity))},
+		open(name){this.screen=name;uni.pageScrollTo({scrollTop:0,duration:0});if(name==='tickets')this.loadTickets();if(['tickets','bind'].includes(name))this.loadStations();if(['balance','points','membership','recharge'].includes(name))this.loadAssets();if(name==='recharge')this.loadRecharge()},
 		selectTicket(ticket){this.selectedTicket=ticket;this.open('ticket-detail')},
 		goBack(){if(['tickets','balance','points','membership'].includes(this.screen))uni.navigateBack();else this.open(this.screen==='recharge'?'balance':'tickets')},
 		goHome(){uni.reLaunch({url:'/pages/index/index'})},
-		toast(title){uni.showToast({title,icon:'none'})},
-		async loadTickets(){try{const data=await waterApi.listTickets();this.ticketError='';this.tickets=data.map(ticket=>({code:ticket.code,type:ticket.ticketType==='电子票'?'电子':'纸质',value:'1张',date:ticket.expiresAt||'长期有效',station:`清泉站点 · ${ticket.station}`,status:ticket.status,redeemedAt:ticket.redeemedAt,productName:ticket.productName||''}))}catch(error){this.ticketError=error.message||'加载失败';console.warn('[ticket-sync]',error.message)}},
-		async loadAssets(){try{const [account,transactions,coupons]=await Promise.all([waterApi.getAccount(),waterApi.listAccountTransactions(),waterApi.listCoupons()]);this.assetError='';this.account=account;this.coupons=coupons;this.balanceRecords=transactions.map(item=>({id:item.id,kind:item.accountType,name:item.note||item.refType,date:String(item.createdAt||'').replace('T',' ').slice(0,16),amount:item.accountType==='余额'?`${item.changeAmount>0?'+':''}${(item.changeAmount/100).toFixed(2)}`:`${item.changeAmount>0?'+':''}${item.changeAmount} 分`,balance:item.accountType==='余额'?(item.balanceAfter/100).toFixed(2):`${item.balanceAfter} 分`,type:item.changeAmount>0?'plus':'minus'}))}catch(error){this.assetError=error.message||'加载失败';console.warn('[asset-sync]',error.message)}},
-		showRecharge(){uni.showModal({title:'余额充值',content:'在线充值暂未开通，请联系所属水站线下充值，入账后余额实时显示。',showCancel:false})},
+		toast(title){if(waterApi.recentlyToasted?.(title))return;uni.showToast({title,icon:'none'})},
+		/** 有效期按本地日期显示（YYYY-MM-DD）；仅在服务端明确无有效期（null）时显示长期有效 */
+		formatDate(value){if(!value)return '长期有效';if(/^\d{4}-\d{2}-\d{2}$/.test(String(value)))return String(value);const date=new Date(value);if(Number.isNaN(date.getTime()))return String(value).slice(0,10);return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`},
+		async loadTickets(){const current=this.readGuard('loadTickets');try{const data=await waterApi.listTickets();if(!current())return;this.ticketError='';this.tickets=data.map(ticket=>({code:ticket.code,type:ticket.ticketType==='电子票'?'电子':'纸质',value:'1张',date:this.formatDate(ticket.expiresAt),station:ticket.station?`山泉到家 · ${ticket.station}`:'山泉到家',status:ticket.status,redeemedAt:ticket.redeemedAt,productName:ticket.productName||''}))}catch(error){if(!current()||error?.code==='STALE_SESSION')return;this.ticketError=error.message||'加载失败';console.warn('[ticket-sync]',error.message)}},
+		async loadAssets(){const current=this.readGuard('loadAssets');try{const [account,transactions,coupons]=await Promise.all([waterApi.getAccount(),waterApi.listAccountTransactions(),waterApi.listCoupons()]);if(!current())return;this.assetError='';this.account=account;this.coupons=coupons;this.balanceRecords=transactions.map(item=>({id:item.id,kind:item.accountType,name:item.note||item.refType,date:String(item.createdAt||'').replace('T',' ').slice(0,16),amount:item.accountType==='余额'?`${item.changeAmount>0?'+':''}${(item.changeAmount/100).toFixed(2)}`:`${item.changeAmount>0?'+':''}${item.changeAmount} 积分`,balance:item.accountType==='余额'?(item.balanceAfter/100).toFixed(2):`${item.balanceAfter} 积分`,type:item.changeAmount>0?'plus':'minus'}))}catch(error){if(!current()||error?.code==='STALE_SESSION')return;this.assetError=error.message||'加载失败';console.warn('[asset-sync]',error.message)}},
+		showRecharge(){uni.showModal({title:'余额充值',content:this.appConfig.wechatPayMessage||'在线充值暂未开通，请联系所属水站线下充值，入账后余额实时显示。',showCancel:false})},
 		openRecharge(){if(!this.appConfig.onlineRecharge)return this.showRecharge();this.open('recharge')},
-		async loadRecharge(){try{const [packages,recharges]=await Promise.all([waterApi.listRechargePackages(),waterApi.listRecharges()]);this.rechargePackages=packages;this.recharges=recharges;if(!this.rechargePackageId&&!this.rechargeCustom&&packages.length)this.rechargePackageId=packages[0].id}catch(error){console.warn('[recharge-sync]',error.message)}},
+		async loadRecharge(){const current=this.readGuard('loadRecharge');try{const [packages,recharges]=await Promise.all([waterApi.listRechargePackages(),waterApi.listRecharges()]);if(!current())return;this.rechargePackages=packages;this.recharges=recharges;if(!this.rechargePackageId&&!this.rechargeCustom&&packages.length)this.rechargePackageId=packages[0].id}catch(error){if(!current()||error?.code==='STALE_SESSION')return;console.warn('[recharge-sync]',error.message)}},
 		pickPackage(pkg){this.rechargePackageId=pkg.id;this.rechargeCustom=''},
 		requestWechatPayment(payParams){return new Promise((resolve,reject)=>{if(typeof uni.requestPayment!=='function')return reject(new Error('当前环境不支持微信支付，请在微信小程序中充值'));uni.requestPayment({provider:'wxpay',...payParams,success:resolve,fail:result=>reject(new Error(/cancel/i.test(String(result?.errMsg||''))?'已取消支付':'微信支付未完成，请稍后重试'))})})},
 		async waitForRecharge(id){for(let attempt=0;attempt<12;attempt+=1){const record=await waterApi.getRecharge(id);if(record.state==='已支付')return record;if(record.state==='已关闭')throw new Error('充值单已关闭，请重新发起');await new Promise(resolve=>setTimeout(resolve,750))}throw new Error('支付结果确认中，请稍后在充值记录查看')},
 		/** 充值金额以服务端套餐/校验为准；到账由微信支付回调确认，前端只轮询结果。 */
-		async submitRecharge(){if(this.recharging)return;const packageId=this.rechargePackageId;const amount=Number(this.rechargeCustom);if(!packageId&&!(amount>=1&&amount<=5000))return this.toast('请选择充值套餐或输入 1–5000 元');this.recharging=true;try{const idempotencyKey=`recharge-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;const result=await waterApi.createRecharge(packageId?{packageId,idempotencyKey}:{amount,idempotencyKey});const id=result.recharge.id;if(result.payParams)await this.requestWechatPayment(result.payParams);else if(result.simulated)await waterApi.simulateRecharge(id);const done=await this.waitForRecharge(id);await this.loadAssets();await this.loadRecharge();this.toast(`充值成功，到账 ¥${(Number(done.amount)+Number(done.bonus||0)).toFixed(2)}`)}catch(error){this.toast(error.message);this.loadRecharge()}finally{this.recharging=false}},
-		showPointsRule(){uni.showModal({title:'积分规则',content:'每消费 1 元得 1 积分（按实付金额，取消订单会收回）；积分可兑换标有积分价格的优惠券，每种优惠券每人限领/限兑一次。',showCancel:false})},
-		couponHint(coupon){if(coupon.customerCouponId)return coupon.customerStatus==='未使用'?`已领取 · 可抵 ¥${Number(coupon.discount).toFixed(2)}`:`${coupon.customerStatus} · ¥${Number(coupon.discount).toFixed(2)}`;if(coupon.pointsCost>0)return `${coupon.pointsCost} 积分兑换 · 抵 ¥${Number(coupon.discount).toFixed(2)}`;return `免费领取 · 抵 ¥${Number(coupon.discount).toFixed(2)}${coupon.type==='满减券'?`（满 ${Number(coupon.minimum).toFixed(0)} 可用）`:''}`},
-		pickCoupon(coupon){if(coupon.customerCouponId)return this.toast(coupon.customerStatus==='未使用'?'该优惠券已在账户中，下单时可选择使用':'该优惠券已使用');if(coupon.pointsCost>0)return this.exchange(coupon);return this.claimCoupon(coupon)},
-		async claimCoupon(coupon){if(coupon.customerCouponId)return this.toast('该优惠券已领取');try{await waterApi.claimCoupon(coupon.couponId);await this.loadAssets();this.toast('优惠券领取成功')}catch(error){this.toast(error.message)}},
-		async bindTicket(){if(!this.ticketCode.trim())return this.toast('请先输入水票防伪码');try{await waterApi.bindTicket(this.ticketCode);await this.loadTickets();this.ticketTab='纸质水票';this.toast('纸质水票绑定成功');setTimeout(()=>this.open('tickets'),600)}catch(error){this.toast(error.message)}},
-		scanTicket(){if(typeof uni.scanCode!=='function')return this.toast('当前环境不支持扫码');uni.scanCode({scanType:['qrCode','barCode'],success:result=>{this.ticketCode=String(result.result||'').trim();if(this.ticketCode)this.bindTicket()},fail:error=>{if(!/cancel/i.test(String(error&&error.errMsg)))this.toast('扫码失败，请手动输入')}})},
-		exchange(coupon){if(Number(this.account.points||0)<coupon.pointsCost)return this.toast(`积分不足，需要 ${coupon.pointsCost} 积分`);uni.showModal({title:'积分兑换',content:`使用 ${coupon.pointsCost} 积分兑换「${coupon.name}」？兑换后不可撤销。`,success:async result=>{if(!result.confirm)return;try{const item=await waterApi.exchangePoints(coupon.couponId);await this.loadAssets();this.toast(`兑换成功，剩余 ${item.pointsAfter} 积分`)}catch(error){this.toast(error.message)}}})}
+		async submitRecharge(){
+			if(this.recharging)return
+			if(!this.appConfig.onlineRecharge)return this.showRecharge()
+			const packageId=this.rechargePackageId, amount=Number(this.rechargeCustom)
+			if(!packageId&&!(amount>=1&&amount<=5000))return this.toast('请选择充值套餐或输入 1–5000 元')
+			this.recharging=true
+			try{
+				const customerId=this.account.id||waterApi.getProfile('customer')?.id
+				if(!customerId)throw new Error('请重新登录后充值')
+				const signature=packageId?`package:${packageId}`:`amount:${amount}`
+				const legacyKey=`water_pending_recharge_${customerId}`
+				const storageKey=`${legacyKey}:${signature}`
+				let pending=uni.getStorageSync(storageKey)
+				const legacy=uni.getStorageSync(legacyKey)
+				if(!pending&&legacy?.signature===signature){pending=legacy;uni.setStorageSync(storageKey,pending);uni.removeStorageSync(legacyKey)}
+				if(!pending||pending.signature!==signature){pending={signature,key:`recharge-${Date.now()}-${Math.random().toString(36).slice(2,10)}`};uni.setStorageSync(storageKey,pending)}
+				const idempotencyKey=pending.key
+				const result=await waterApi.createRecharge(packageId?{packageId,idempotencyKey}:{amount,idempotencyKey})
+				const id=result.recharge.id
+				if(result.recharge.state==='已关闭'){this.clearPendingRecharge(storageKey,idempotencyKey);throw new Error('原充值单已关闭，请确认金额后重新发起充值')}
+				if(result.recharge.state!=='已支付'){
+					if(result.payParams)await this.requestWechatPayment(result.payParams)
+					else if(result.simulated)await waterApi.simulateRecharge(id)
+					else throw new Error('未获取到支付信息，请稍后重试')
+				}
+				const done=await this.waitForRecharge(id)
+				this.clearPendingRecharge(storageKey,idempotencyKey)
+				await this.loadAssets();await this.loadRecharge()
+				this.toast(`充值成功，到账 ¥${(Number(done.amount)+Number(done.bonus||0)).toFixed(2)}`)
+			}catch(error){this.toast(error.message);this.loadRecharge()}finally{this.recharging=false}
+		},
+		clearPendingRecharge(storageKey,key){if(uni.getStorageSync(storageKey)?.key===key)uni.removeStorageSync(storageKey)},
+		showPointsRule(){uni.showModal({title:'积分规则',content:'按每笔订单实付整元累计积分，退款相应扣回；已使用的积分不足扣回时，后续所得积分先抵扣欠额。积分可兑换商城中标有积分价格的优惠券，每种优惠券每人限领/限兑一次，使用条件以券面和结算页为准。',showCancel:false})},
+		/** 发行量已领完（服务端 issued_quantity>=total_quantity 会拒绝领取/兑换） */
+		couponSoldOut(coupon){return !coupon.customerCouponId&&Number(coupon.issuedQuantity)>=Number(coupon.totalQuantity)},
+		couponHint(coupon){if(coupon.customerCouponId)return coupon.customerStatus==='未使用'?`已领取 · 可抵 ¥${Number(coupon.discount).toFixed(2)}`:`${coupon.customerStatus} · ¥${Number(coupon.discount).toFixed(2)}`;if(this.couponSoldOut(coupon))return `${coupon.pointsCost>0?'已兑完':'已领完'} · ¥${Number(coupon.discount).toFixed(2)}`;if(coupon.pointsCost>0)return `${coupon.pointsCost} 积分兑换 · 抵 ¥${Number(coupon.discount).toFixed(2)}`;return `免费领取 · 抵 ¥${Number(coupon.discount).toFixed(2)}${coupon.type==='满减券'?`（满 ${Number(coupon.minimum).toFixed(0)} 可用）`:''}`},
+		pickCoupon(coupon){if(this.claimingCouponId)return;if(coupon.customerCouponId)return this.toast(coupon.customerStatus==='未使用'?'该优惠券已在账户中，下单时可选择使用':'该优惠券已使用');if(this.couponSoldOut(coupon))return this.toast(coupon.pointsCost>0?'该优惠券已兑完':'该优惠券已领完');if(coupon.pointsCost>0)return this.exchange(coupon);return this.claimCoupon(coupon)},
+		/** 领取进行中不重复提交；接口层静默，错误只由这里提示一次 */
+		async claimCoupon(coupon){if(this.claimingCouponId)return;if(coupon.customerCouponId)return this.toast('该优惠券已领取');this.claimingCouponId=coupon.couponId;try{await waterApi.claimCoupon(coupon.couponId);await this.loadAssets();this.toast('优惠券领取成功')}catch(error){this.toast(error.message);this.loadAssets()}finally{this.claimingCouponId=''}},
+		/** 纸质水票只由水站后台发放入账（2026-09-28 业主决定），这里只提供联系水站，不再有自助绑定入口 */
+		async loadStations(){if(this.stations.length)return;try{this.stations=await waterApi.listCatalogStations()}catch(error){console.warn('[station-sync]',error.message)}},
+		callStation(){const phone=String(this.contactStation?.phone||'').replace(/[^\d+-]/g,'');if(!phone)return this.toast('请联系所属水站发放纸质水票');if(typeof uni.makePhoneCall!=='function')return this.toast(`水站电话 ${phone}`);uni.makePhoneCall({phoneNumber:phone,fail:error=>{if(!/cancel/i.test(String(error&&error.errMsg)))this.toast('拨号失败，请稍后重试')}})},
+		exchange(coupon){if(Number(this.account.points||0)<coupon.pointsCost)return this.toast(`积分不足，需要 ${coupon.pointsCost} 积分`);uni.showModal({title:'积分兑换',content:`使用 ${coupon.pointsCost} 积分兑换「${coupon.name}」？兑换后不可撤销。`,success:async result=>{if(!result.confirm||this.claimingCouponId)return;this.claimingCouponId=coupon.couponId;try{const item=await waterApi.exchangePoints(coupon.couponId);await this.loadAssets();this.toast(`兑换成功，剩余 ${item.pointsAfter} 积分`)}catch(error){this.toast(error.message);this.loadAssets()}finally{this.claimingCouponId=''}}})}
 	}
 }
 </script>
@@ -125,6 +166,7 @@ export default {
 
 .recharge-hero{height:220rpx}.recharge-grid{margin:20rpx 0;display:grid;grid-template-columns:repeat(3,1fr);gap:16rpx}.recharge-option{min-height:132rpx;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6rpx;border:2rpx solid #dfe7e3;border-radius:18rpx;background:#fff}.recharge-option .ui-strong{font-size:34rpx;color:#0b5949}.recharge-option text{font-size:max(12px, 21rpx);color:#b06d12}.recharge-option.active{border-color:#0b6b56;background:#eef7f3}.main-button:disabled{opacity:.55}
 .integration-note{margin-bottom:16rpx;padding:15rpx 18rpx;border:1rpx solid #e7d9b7;border-radius:12rpx;color:#765f36;background:#fff8e8;font-size:max(12px, 19rpx)}.membership-note{position:relative;z-index:2;margin:0 0 12rpx}.balance-hero button:disabled{opacity:.68}.unavailable-button,.unavailable-card{cursor:not-allowed}.detail-ticket>.unavailable-button{color:#63736d;background:#dfe6e3}.unavailable-card{opacity:.68}.empty-record{padding:18rpx 0;text-align:center;color:#8c9994;font-size:max(12px, 20rpx)}
+.paper-note{margin-top:8rpx}.paper-note .wide-light{margin-top:6rpx}.paper-back{margin-top:18rpx}
 .ticket-mark{position:absolute;right:26rpx;opacity:.14}.empty-ticket{padding:70rpx 20rpx;text-align:center;color:#82908b;font-size:max(12px, 22rpx)}
 .gift-image{position:relative}.gift-image:after{content:'';position:absolute;inset:28rpx;border:1rpx solid rgba(15,114,93,.08);border-radius:50%}.gift-image image{position:relative;z-index:1}
 .member-level{display:block;margin-bottom:28rpx;font-size:30rpx;font-weight:650}.member-level:before{content:'◇';margin-right:10rpx;color:#d9c39d}.member-card>.ui-small{display:block;color:#e0e4e2}.member-progress-copy{margin-top:15rpx;display:flex;justify-content:space-between;font-size:max(12px, 18rpx)}
